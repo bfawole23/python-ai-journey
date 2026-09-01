@@ -27,7 +27,11 @@ client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 response = client.models.generate_content(
     model="gemini-3.5-flash",
-    contents="Explain what a healthcare AI agent could do, in 2 sentences."
+    contents="Tell me about diabetes."
 )
+parsed = json.loads(response.text)
+print(parsed["risk_level"])
+print(parsed["condition"])
+print(parsed["summary"])
 
 print(response.text)
