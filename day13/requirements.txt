@@ -1,3 +1,6 @@
+cat > day13/requirements.txt << 'EOF'
 flask
 google-genai
 gunicorn
+numpy
+EOF
