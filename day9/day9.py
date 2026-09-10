@@ -15,7 +15,7 @@
 # # "content": "..." — the actual text of your message/question
 # # response — the variable storing whatever Claude sends back
 #     messages=[
-#         {"role": "user", "content": "Explain what a healthcare AI agent could do, in 2 sentences."}
+#         {"role": "user", "content": "Explain what an IT support AI agent could do, in 2 sentences."}
 #     ]
 # )
 
