@@ -29,7 +29,7 @@ import json
 app = Flask(__name__)
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-def call_with_retry(contents, max_retries=3):
+def call_with_retry(contents, max_retries=2):
     for attempt in range(max_retries):
         try:
             response = client.models.generate_content(
@@ -40,7 +40,7 @@ def call_with_retry(contents, max_retries=3):
         except Exception as e:
             print(f"Attempt {attempt + 1} failed: {e}")
             if attempt < max_retries - 1:
-                time.sleep(15)
+                time.sleep(3)
     raise Exception("All retry attempts failed")
 
 # route() is a Flask function that connects a URL to a Python function.
