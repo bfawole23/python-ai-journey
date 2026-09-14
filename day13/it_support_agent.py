@@ -4,6 +4,8 @@ import time
 import json
 import numpy as np
 from flask import Flask, request, jsonify
+from dotenv import load_dotenv
+load_dotenv()
 
 app = Flask(__name__)
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
