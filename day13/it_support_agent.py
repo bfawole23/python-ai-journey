@@ -8,9 +8,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
+def get_client():
+    return genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 def call_with_retry(contents, max_retries=2):
+    client = get_client()
     for attempt in range(max_retries):
         try:
             response = client.models.generate_content(
@@ -25,7 +27,8 @@ def call_with_retry(contents, max_retries=2):
     raise Exception("All retry attempts failed")
 
 def get_embedding(text):
-    result = client.models.embed_content(
+    client = get_client()
+    result = get_client().models.embed_content(
         model="gemini-embedding-001",
         contents=text
     )
