@@ -11,7 +11,7 @@ app = Flask(__name__)
 def get_client():
     return genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-def call_with_retry(contents, max_retries=2):
+def call_with_retry(contents, max_retries=4):
     client = get_client()
     for attempt in range(max_retries):
         try:
