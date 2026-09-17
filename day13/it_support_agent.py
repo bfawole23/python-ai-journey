@@ -5,6 +5,8 @@ import json
 import logging
 import numpy as np
 from flask import Flask, request, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,6 +15,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+limiter = Limiter(get_remote_address, app=app, default_limits=["20 per hour"])
 
 def get_client():
     return genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
@@ -70,8 +73,18 @@ def health():
 
 @app.route("/ask", methods=["POST"])
 def ask():
-    data = request.get_json()
-    issue = data.get("question", "")
+    data = request.get_json(silent=True)
+
+    if not data or "question" not in data:
+        return jsonify({"error": "Missing 'question' field in request body"}), 400
+
+    issue = data.get("question", "").strip()
+
+    if not issue:
+        return jsonify({"error": "Question cannot be empty"}), 400
+
+    if len(issue) > 500:
+        return jsonify({"error": "Question too long (max 500 characters)"}), 400
 
     prompt = f"""An employee reports: "{issue}"
 

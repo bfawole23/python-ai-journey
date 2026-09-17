@@ -4,3 +4,4 @@ gunicorn
 numpy
 python-dotenv
 pytest
+flask-limiter
