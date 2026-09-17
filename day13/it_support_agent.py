@@ -2,12 +2,18 @@ from google import genai
 import os
 import time
 import json
+import logging
 import numpy as np
 from flask import Flask, request, jsonify
 from dotenv import load_dotenv
+
 load_dotenv()
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
+
 def get_client():
     return genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
@@ -19,16 +25,20 @@ def call_with_retry(contents, max_retries=4):
                 model="gemini-3.6-flash",
                 contents=contents
             )
+            logger.info(f"Successful API call on attempt {attempt + 1}")
             return response
         except Exception as e:
-            print(f"Attempt {attempt + 1} failed: {e}")
+            logger.warning(f"Attempt {attempt + 1} failed: {e}")
             if attempt < max_retries - 1:
-                time.sleep(3)
+                wait_time = 5 * (attempt + 1)
+                logger.info(f"Waiting {wait_time} seconds before retrying...")
+                time.sleep(wait_time)
+    logger.error("All retry attempts failed")
     raise Exception("All retry attempts failed")
 
 def get_embedding(text):
     client = get_client()
-    result = get_client().models.embed_content(
+    result = client.models.embed_content(
         model="gemini-embedding-001",
         contents=text
     )
@@ -54,12 +64,17 @@ def escalate_to_technician(issue_description):
 def home():
     return "IT Support AI Agent is running!"
 
+@app.route("/health")
+def health():
+    return jsonify({"status": "healthy", "service": "it-support-agent"})
+
 @app.route("/ask", methods=["POST"])
 def ask():
     data = request.get_json()
     issue = data.get("question", "")
 
-    prompt = f"""An employee reports: "{issue}" 
+    prompt = f"""An employee reports: "{issue}"
+
 Decide the action:
 - Use "provide_fix" ONLY for common, self-resolvable issues (VPN hiccups, printer issues, password resets, slow performance) with no major time pressure.
 - Use "escalate_to_technician" if the issue involves: hardware failure, complete inability to work, urgent business deadlines/client-facing situations, or anything a quick fix likely won't solve in time.
@@ -69,6 +84,7 @@ Return ONLY valid JSON in this exact format, no other text:
   "action": "provide_fix" or "escalate_to_technician",
   "reason": "why this action was chosen"
 }}"""
+
     response = call_with_retry(prompt)
     decision = json.loads(response.text)
 
@@ -81,4 +97,3 @@ Return ONLY valid JSON in this exact format, no other text:
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
-
