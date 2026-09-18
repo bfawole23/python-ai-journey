@@ -3,3 +3,4 @@ venv/
 *.key
 *.pem
 day13/tickets.db
+day13/tickets.db
