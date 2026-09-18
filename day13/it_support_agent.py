@@ -3,11 +3,14 @@ import os
 import time
 import json
 import logging
+import sqlite3
 import numpy as np
+from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tickets.db")
 
 load_dotenv()
 
@@ -16,6 +19,23 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 limiter = Limiter(get_remote_address, app=app, default_limits=["20 per hour"])
+
+def init_db():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS tickets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            employee_question TEXT,
+            decision TEXT,
+            status TEXT,
+            created_at TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+init_db()
 
 def get_client():
     return genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
@@ -63,6 +83,17 @@ def provide_fix(issue_summary):
 def escalate_to_technician(issue_description):
     return f"This issue has been logged and escalated to a technician: '{issue_description}'"
 
+def save_ticket(employee_question, decision):
+    conn = sqlite3.connect(DB_PATH
+)
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO tickets (employee_question, decision, status, created_at) VALUES (?, ?, ?, ?)",
+        (employee_question, decision, "open", datetime.now().isoformat())
+    )
+    conn.commit()
+    conn.close()
+
 @app.route("/")
 def home():
     return "IT Support AI Agent is running!"
@@ -104,6 +135,7 @@ Return ONLY valid JSON in this exact format, no other text:
     if decision["action"] == "provide_fix":
         result = provide_fix(issue)
     else:
+        save_ticket(issue, decision["action"])
         result = escalate_to_technician(issue)
 
     return jsonify({"decision": decision, "result": result})
