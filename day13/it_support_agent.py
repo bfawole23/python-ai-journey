@@ -77,15 +77,53 @@ knowledge_base = [
     "Slow computer performance: Restart the machine, check for pending updates, and close unused background applications."
 ]
 
+_kb_embeddings = None
+
+def get_kb_embeddings():
+    global _kb_embeddings
+    if _kb_embeddings is None:
+        _kb_embeddings = [get_embedding(doc) for doc in knowledge_base]
+    return _kb_embeddings
+
+def search_knowledge_base(query):
+    """Searches knowledge base using vector embeddings with keyword fallback."""
+    if os.environ.get("GEMINI_API_KEY"):
+        try:
+            query_emb = get_embedding(query)
+            kb_embeddings = get_kb_embeddings()
+            scores = [cosine_similarity(query_emb, doc_emb) for doc_emb in kb_embeddings]
+            best_idx = int(np.argmax(scores))
+            best_score = float(scores[best_idx])
+            logger.info(f"RAG search best match score: {best_score:.4f}")
+            if best_score >= 0.4:
+                return knowledge_base[best_idx]
+        except Exception as e:
+            logger.warning(f"Embedding search failed: {e}. Falling back to keyword search.")
+
+    # Fallback keyword matching (useful for testing or when API key is missing)
+    query_words = [w.lower() for w in query.replace("'", "").replace('"', "").split() if len(w) > 2]
+    best_doc = None
+    max_matches = 0
+    for doc in knowledge_base:
+        doc_lower = doc.lower()
+        matches = sum(1 for w in query_words if w in doc_lower)
+        if matches > max_matches:
+            max_matches = matches
+            best_doc = doc
+
+    return best_doc if max_matches > 0 else knowledge_base[0]
+
 def provide_fix(issue_summary):
+    relevant_doc = search_knowledge_base(issue_summary)
+    if relevant_doc:
+        return f"Here's a suggested fix for '{issue_summary}': {relevant_doc}"
     return f"Here's a suggested fix: {issue_summary}"
 
 def escalate_to_technician(issue_description):
     return f"This issue has been logged and escalated to a technician: '{issue_description}'"
 
 def save_ticket(employee_question, decision):
-    conn = sqlite3.connect(DB_PATH
-)
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute(
         "INSERT INTO tickets (employee_question, decision, status, created_at) VALUES (?, ?, ?, ?)",
@@ -101,6 +139,24 @@ def home():
 @app.route("/health")
 def health():
     return jsonify({"status": "healthy", "service": "it-support-agent"})
+
+@app.route("/tickets", methods=["GET"])
+def tickets():
+    status = request.args.get("status")
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    if status:
+        cursor.execute(
+            "SELECT id, employee_question, decision, status, created_at FROM tickets WHERE status = ? ORDER BY id DESC",
+            (status,)
+        )
+    else:
+        cursor.execute("SELECT id, employee_question, decision, status, created_at FROM tickets ORDER BY id DESC")
+    rows = cursor.fetchall()
+    tickets_list = [dict(row) for row in rows]
+    conn.close()
+    return jsonify({"tickets": tickets_list, "count": len(tickets_list)})
 
 @app.route("/ask", methods=["POST"])
 def ask():

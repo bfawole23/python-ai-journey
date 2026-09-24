@@ -2,5 +2,8 @@ venv/
 .env
 *.key
 *.pem
-day13/tickets.db
-day13/tickets.db
+*.db
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
