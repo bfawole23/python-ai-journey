@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI IT Support Studio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #f59e0b;
+            --primary-glow: rgba(245, 158, 11, 0.45);
+            --accent: #993300;
+            --accent-glow: rgba(153, 51, 0, 0.45);
+            --cyan: #f59e0b;
+            --emerald: #10b981;
+            --rose: #993300;
+            --amber: #f59e0b;
+            --bg-dark: #000000;
+            --card-surface: rgba(14, 10, 8, 0.94);
+            --card-border: rgba(245, 158, 11, 0.22);
+            --text-main: #f8fafc;
+            --text-muted: #a3a3a3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: #000000;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.25) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(153, 51, 0, 0.35) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(245, 158, 11, 0.12) 0px, transparent 50%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 30px 15px;
+            color: var(--text-main);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 860px;
+            background: var(--card-surface);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--card-border);
+            border-radius: 28px;
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.95), 0 0 30px rgba(153, 51, 0, 0.25);
+            overflow: hidden;
+            animation: floatUp 0.4s ease-out;
+        }
+
+        @keyframes floatUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .portal-header {
+            padding: 30px 36px 24px;
+            border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, transparent 100%);
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #f59e0b, #993300);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.45);
+        }
+
+        .brand-text h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, #ffffff 40%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-text p {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .pulse-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            color: #f59e0b;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #f59e0b;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #f59e0b;
+            animation: pulseGlow 1.8s infinite;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+
+        .mode-switcher {
+            display: flex;
+            gap: 8px;
+            padding: 18px 36px 0;
+        }
+
+        .mode-tab {
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .mode-tab.active {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(153, 51, 0, 0.4));
+            border-color: #f59e0b;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);
+        }
+
+        .portal-content {
+            padding: 24px 36px 32px;
+        }
+
+        .step-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #f59e0b;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .domain-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .domain-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 14px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .domain-card:hover {
+            background: rgba(245, 158, 11, 0.08);
+            border-color: rgba(245, 158, 11, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .domain-card.active {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(153, 51, 0, 0.35));
+            border-color: #f59e0b;
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .domain-icon { font-size: 26px; }
+        .domain-title { font-size: 0.82rem; font-weight: 700; color: #ffffff; }
+
+        .symptoms-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .symptom-chip {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .symptom-chip:hover {
+            background: rgba(245, 158, 11, 0.1);
+            border-color: rgba(245, 158, 11, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .symptom-chip.active {
+            background: linear-gradient(135deg, #f59e0b, #993300);
+            border-color: transparent;
+            color: #ffffff;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.45);
+        }
+
+        .symptom-chip .badge {
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .badge-fix { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .badge-esc { background: rgba(153, 51, 0, 0.35); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .urgency-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 26px;
+        }
+
+        .urgency-btn {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 10px 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .urgency-btn.active[data-level="normal"] {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: #10b981;
+            color: #34d399;
+        }
+
+        .urgency-btn.active[data-level="medium"] {
+            background: rgba(245, 158, 11, 0.18);
+            border-color: #f59e0b;
+            color: #fbbf24;
+        }
+
+        .urgency-btn.active[data-level="urgent"] {
+            background: rgba(153, 51, 0, 0.35);
+            border-color: #f59e0b;
+            color: #f59e0b;
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
+        }
+
+        .btn-launch {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #f59e0b 0%, #993300 50%, #f59e0b 100%);
+            background-size: 200% auto;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-launch:hover:not(:disabled) {
+            background-position: right center;
+            transform: translateY(-2px);
+            box-shadow: 0 15px 35px -5px rgba(153, 51, 0, 0.6);
+        }
+
+        .btn-launch:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #custom-panel { display: none; }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 16px;
+            color: white;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            outline: none;
+            resize: vertical;
+            transition: all 0.2s;
+            margin-bottom: 8px;
+        }
+
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25);
+        }
+
+        #diagnostic-display {
+            margin-top: 24px;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .resolution-card {
+            border-radius: 20px;
+            padding: 26px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .resolution-card.fix {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .resolution-card.escalate {
+            background: linear-gradient(135deg, rgba(153, 51, 0, 0.35) 0%, rgba(0, 0, 0, 0.7) 100%);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+
+        .res-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .resolution-card.fix .res-badge { background: #10b981; color: #064e3b; }
+        .resolution-card.escalate .res-badge { background: #993300; color: #ffffff; border: 1px solid #f59e0b; }
+
+        .res-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            color: #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .checklist-item:hover { background: rgba(245, 158, 11, 0.08); }
+
+        .checklist-item.checked {
+            text-decoration: line-through;
+            opacity: 0.6;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .checklist-item input {
+            margin-top: 4px;
+            accent-color: var(--emerald);
+            cursor: pointer;
+        }
+
+        .ticket-boarding-pass {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px dashed rgba(245, 158, 11, 0.5);
+            border-radius: 14px;
+            padding: 16px;
+            margin-top: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ticket-num {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #f59e0b;
+        }
+
+        .reason-callout {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.84rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .portal-footer {
+            border-top: 1px solid rgba(245, 158, 11, 0.15);
+            padding: 18px 36px;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .toggle-feed {
+            color: #f59e0b;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        #tickets-feed {
+            display: none;
+            padding: 16px 36px 24px;
+            background: rgba(0, 0, 0, 0.5);
+            border-top: 1px solid rgba(245, 158, 11, 0.15);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .db-ticket-row {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header class="portal-header">
+        <div class="header-brand">
+            <div class="brand-avatar">🤖</div>
+            <div class="brand-text">
+                <h1>AI IT Support Studio</h1>
+                <p>One-Click Automated Triage & RAG Self-Service Engine</p>
+            </div>
+        </div>
+        <div class="pulse-pill">
+            <span class="pulse-dot"></span>
+            <span>Active Agent</span>
+        </div>
+    </header>
+
+    <div class="mode-switcher">
+        <div class="mode-tab active" onclick="switchMode('guided')">⚡ 1-Click Diagnosis (No Typing)</div>
+        <div class="mode-tab" onclick="switchMode('custom')">✍️ Type Custom Problem</div>
+    </div>
+
+    <main class="portal-content">
+        <div id="guided-panel">
+            <div class="step-label">Step 1 • Select Affected System</div>
+            <div class="domain-grid">
+                <div class="domain-card active" onclick="pickDomain('laptop', this)">
+                    <span class="domain-icon">💻</span>
+                    <span class="domain-title">PC / Laptop</span>
+                </div>
+                <div class="domain-card" onclick="pickDomain('network', this)">
+                    <span class="domain-icon">🌐</span>
+                    <span class="domain-title">Network & VPN</span>
+                </div>
+                <div class="domain-card" onclick="pickDomain('hardware', this)">
+                    <span class="domain-icon">🖨️</span>
+                    <span class="domain-title">Peripherals</span>
+                </div>
+                <div class="domain-card" onclick="pickDomain('software', this)">
+                    <span class="domain-icon">📧</span>
+                    <span class="domain-title">Apps & Email</span>
+                </div>
+                <div class="domain-card" onclick="pickDomain('emergency', this)">
+                    <span class="domain-icon">🚨</span>
+                    <span class="domain-title">Disaster</span>
+                </div>
+            </div>
+
+            <div class="step-label">Step 2 • Click Your Issue (Instant Selection)</div>
+            <div class="symptoms-container" id="symptomsList"></div>
+
+            <div class="step-label">Step 3 • Urgency & Business Impact</div>
+            <div class="urgency-row">
+                <button class="urgency-btn active" data-level="normal" onclick="pickUrgency('normal', this)">
+                    🟢 Normal Priority
+                </button>
+                <button class="urgency-btn" data-level="medium" onclick="pickUrgency('medium', this)">
+                    🟡 Work Blocked
+                </button>
+                <button class="urgency-btn" data-level="urgent" onclick="pickUrgency('urgent', this)">
+                    🚨 Demo / Meeting in 10m
+                </button>
+            </div>
+        </div>
+
+        <div id="custom-panel">
+            <div class="step-label">Describe Your Technical Problem</div>
+            <textarea id="customInput" maxlength="500" placeholder="Describe in your own words what is broken or malfunctioning..."></textarea>
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-align: right; margin-bottom: 16px;" id="charCount">0 / 500</div>
+        </div>
+
+        <button class="btn-launch" id="btnLaunch" onclick="launchDiagnosis()">
+            <span id="btnLaunchText">⚡ Start Instant AI Resolution</span>
+        </button>
+
+        <section id="diagnostic-display"></section>
+    </main>
+
+    <div id="tickets-feed">
+        <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; margin-bottom:10px; font-size:0.9rem; color:#ffffff;">
+            Live Persistent Database Feed (SQLite):
+        </div>
+        <div id="ticketsRows">Loading tickets...</div>
+    </div>
+
+    <footer class="portal-footer">
+        <span>Powered by Gemini + Vector RAG + SQLite</span>
+        <span class="toggle-feed" onclick="toggleTicketsFeed()">
+            📋 View Escalated Tickets (<span id="ticketCountBadge">0</span>) ▾
+        </span>
+    </footer>
+</div>
+
+<script>
+    const CATALOG = {
+        laptop: [
+            { id: 'laptop_slow', title: 'Computer Freezing / High Fan Noise', badge: 'Self-Fix', type: 'fix', prompt: 'My computer is extremely slow, freezing up, and apps take minutes to respond.' },
+            { id: 'laptop_disk', title: 'Disk Storage C: Drive Full', badge: 'Self-Fix', type: 'fix', prompt: 'My main drive C is completely full and I cannot save downloads or work files.' },
+            { id: 'laptop_dead', title: 'Laptop Won\'t Turn On (Dead/Black Screen)', badge: 'Escalate', type: 'esc', prompt: 'My laptop will not turn on at all, black screen with no power lights.' },
+            { id: 'laptop_battery', title: 'Battery Not Charging / Adapter Fault', badge: 'Escalate', type: 'esc', prompt: 'Laptop battery does not charge when plugged into power brick.' }
+        ],
+        network: [
+            { id: 'net_vpn', title: 'VPN Won\'t Connect / Authentication Error', badge: 'Self-Fix', type: 'fix', prompt: 'My VPN keeps dropping connection and will not authenticate with my credentials.' },
+            { id: 'net_wifi', title: 'Wi-Fi Connected But No Internet', badge: 'Self-Fix', type: 'fix', prompt: 'Connected to company Wi-Fi network but internet pages and intranet do not load.' },
+            { id: 'net_pwd', title: 'Password Reset / Account Locked', badge: 'Self-Fix', type: 'fix', prompt: 'I forgot my password and my account is locked after multiple failed attempts.' },
+            { id: 'net_mfa', title: 'MFA Code Not Arriving on Phone', badge: 'Self-Fix', type: 'fix', prompt: 'Two-factor authentication code is not delivering to my mobile device.' }
+        ],
+        hardware: [
+            { id: 'hw_print', title: 'Printer Offline / Stuck in Queue', badge: 'Self-Fix', type: 'fix', prompt: 'The office printer is offline, not printing jobs, or stuck in the print queue.' },
+            { id: 'hw_screen', title: 'External Monitor Black / Not Detected', badge: 'Self-Fix', type: 'fix', prompt: 'My second monitor screen stays black and my laptop does not detect the external display.' },
+            { id: 'hw_audio', title: 'Headset Mic Not Working in Meetings', badge: 'Self-Fix', type: 'fix', prompt: 'My headset microphone is not working or detected during Microsoft Teams / Zoom calls.' },
+            { id: 'hw_usb', title: 'Docking Station / USB Hub Disconnected', badge: 'Self-Fix', type: 'fix', prompt: 'Docking station USB ports and display ports stopped functioning.' }
+        ],
+        software: [
+            { id: 'sw_outlook', title: 'Outlook Email Password Loop / Not Syncing', badge: 'Self-Fix', type: 'fix', prompt: 'Outlook keeps prompting for password repeatedly and cannot receive new emails.' },
+            { id: 'sw_teams', title: 'Teams Crashing on Screen Share', badge: 'Self-Fix', type: 'fix', prompt: 'Microsoft Teams crashes immediately whenever I start a screen share presentation.' },
+            { id: 'sw_browser', title: 'Browser Certificate Security Warning', badge: 'Self-Fix', type: 'fix', prompt: 'Chrome/Edge displays SSL certificate security error on corporate portals.' }
+        ],
+        emergency: [
+            { id: 'em_meeting', title: 'Laptop Dead Before Client Demo (10 mins!)', badge: '🚨 High Priority', type: 'esc', prompt: 'My laptop will not turn on at all and I have a critical client presentation in 10 minutes!' },
+            { id: 'em_spill', title: 'Liquid Coffee Spill on Laptop Keyboard', badge: '🚨 Hardware Emergency', type: 'esc', prompt: 'Coffee spilled across the keyboard and the laptop shut down immediately.' },
+            { id: 'em_smoke', title: 'Burning Smell / Smoke from Vent', badge: '🚨 Hardware Hazard', type: 'esc', prompt: 'Laptop charger emitted smoke and burning plastic smell.' }
+        ]
+    };
+
+    let selectedDomain = 'laptop';
+    let selectedSymptom = null;
+    let selectedUrgency = 'normal';
+    let currentMode = 'guided';
+
+    function renderSymptoms(domainKey) {
+        const list = document.getElementById('symptomsList');
+        list.innerHTML = '';
+        const items = CATALOG[domainKey] || [];
+
+        items.forEach((item, index) => {
+            const chip = document.createElement('div');
+            chip.className = `symptom-chip ${selectedSymptom && selectedSymptom.id === item.id ? 'active' : ''}`;
+            const badgeClass = item.type === 'fix' ? 'badge-fix' : 'badge-esc';
+
+            chip.innerHTML = `
+                <span>${item.title}</span>
+                <span class="badge ${badgeClass}">${item.badge}</span>
+            `;
+            chip.onclick = () => selectSymptom(item, chip);
+            list.appendChild(chip);
+
+            if (index === 0 && !selectedSymptom) {
+                selectSymptom(item, chip);
+            }
+        });
+    }
+
+    function selectSymptom(item, element) {
+        selectedSymptom = item;
+        document.querySelectorAll('.symptom-chip').forEach(c => c.classList.remove('active'));
+        element.classList.add('active');
+    }
+
+    function pickDomain(domainKey, cardElem) {
+        selectedDomain = domainKey;
+        selectedSymptom = null;
+        document.querySelectorAll('.domain-card').forEach(c => c.classList.remove('active'));
+        cardElem.classList.add('active');
+        renderSymptoms(domainKey);
+    }
+
+    function pickUrgency(level, btnElem) {
+        selectedUrgency = level;
+        document.querySelectorAll('.urgency-btn').forEach(b => b.classList.remove('active'));
+        btnElem.classList.add('active');
+    }
+
+    function switchMode(mode) {
+        currentMode = mode;
+        const guidedPanel = document.getElementById('guided-panel');
+        const customPanel = document.getElementById('custom-panel');
+        const tabs = document.querySelectorAll('.mode-tab');
+
+        if (mode === 'guided') {
+            tabs[0].classList.add('active');
+            tabs[1].classList.remove('active');
+            guidedPanel.style.display = 'block';
+            customPanel.style.display = 'none';
+        } else {
+            tabs[0].classList.remove('active');
+            tabs[1].classList.add('active');
+            guidedPanel.style.display = 'none';
+            customPanel.style.display = 'block';
+            document.getElementById('customInput').focus();
+        }
+    }
+
+    async function launchDiagnosis() {
+        let questionText = '';
+
+        if (currentMode === 'guided') {
+            if (!selectedSymptom) {
+                alert('Please click one of the issue options above.');
+                return;
+            }
+            questionText = selectedSymptom.prompt;
+            if (selectedUrgency === 'urgent') {
+                questionText += " Urgent: client meeting in 10 minutes!";
+            } else if (selectedUrgency === 'medium') {
+                questionText += " Work is currently blocked.";
+            }
+        } else {
+            questionText = document.getElementById('customInput').value.trim();
+            if (!questionText) {
+                alert('Please type a description of your problem.');
+                return;
+            }
+        }
+
+        const display = document.getElementById('diagnostic-display');
+        const btn = document.getElementById('btnLaunch');
+        const btnText = document.getElementById('btnLaunchText');
+
+        btn.disabled = true;
+        btnText.innerHTML = `⚡ Analyzing with AI Agent...`;
+        display.style.display = 'block';
+        display.innerHTML = `<div style="text-align:center; padding:20px; color:#f59e0b; font-weight:700;">⚡ Analyzing symptoms with AI...</div>`;
+
+        try {
+            const res = await fetch('/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question: questionText })
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                display.innerHTML = `
+                    <div class="resolution-card escalate">
+                        <div class="res-badge">Notice</div>
+                        <div class="res-title">Request Not Processed</div>
+                        <p style="color:#e2e8f0;">${escapeHtml(data.error || 'Server error occurred')}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const isFix = data.decision.action === 'provide_fix';
+
+            if (isFix) {
+                const rawSteps = data.result.replace(/^Here's a suggested fix for '[^']+':\s*/i, '');
+                const stepParts = rawSteps.split(/,\s*(?=[A-Z])/).map(s => s.trim()).filter(Boolean);
+
+                const checklistHtml = stepParts.map((step, idx) => `
+                    <label class="checklist-item" onclick="toggleCheck(this)">
+                        <input type="checkbox">
+                        <span><strong>Step ${idx + 1}:</strong> ${escapeHtml(step)}</span>
+                    </label>
+                `).join('');
+
+                display.innerHTML = `
+                    <div class="resolution-card fix">
+                        <div class="res-badge">🟢 Instant Resolution Found</div>
+                        <div class="res-title">Self-Service Action Plan</div>
+                        <p style="font-size:0.88rem; color:#94a3b8; margin-bottom:14px;">Tick off each step as you complete it:</p>
+                        ${checklistHtml || `<div class="checklist-item"><span>${escapeHtml(data.result)}</span></div>`}
+                        <div class="reason-callout">
+                            💡 <strong>Why Self-Service:</strong> ${escapeHtml(data.decision.reason)}
+                        </div>
+                    </div>
+                `;
+            } else {
+                display.innerHTML = `
+                    <div class="resolution-card escalate">
+                        <div class="res-badge">🚨 Escalated to IT Technician</div>
+                        <div class="res-title">High Priority Ticket Logged</div>
+                        <p style="color:#e2e8f0; font-size:0.95rem; line-height:1.6;">${escapeHtml(data.result)}</p>
+                        
+                        <div class="ticket-boarding-pass">
+                            <div>
+                                <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Database Record</div>
+                                <div class="ticket-num">Status: OPEN • PRIORITY 1</div>
+                            </div>
+                            <div style="font-size:1.8rem;">🎫</div>
+                        </div>
+
+                        <div class="reason-callout">
+                            🚨 <strong>Escalation Reason:</strong> ${escapeHtml(data.decision.reason)}
+                        </div>
+                    </div>
+                `;
+                fetchTickets();
+            }
+
+        } catch (err) {
+            display.innerHTML = `
+                <div class="resolution-card escalate">
+                    <div class="res-badge">Notice</div>
+                    <div class="res-title">Server Connection Failed</div>
+                    <p style="color:#e2e8f0;">Ensure the backend python server is running.</p>
+                </div>
+            `;
+        } finally {
+            btn.disabled = false;
+            btnText.innerHTML = `⚡ Start Instant AI Resolution`;
+        }
+    }
+
+    function toggleCheck(labelElem) {
+        const checkbox = labelElem.querySelector('input');
+        if (checkbox.checked) {
+            labelElem.classList.add('checked');
+        } else {
+            labelElem.classList.remove('checked');
+        }
+    }
+
+    async function fetchTickets() {
+        try {
+            const res = await fetch('/tickets');
+            const data = await res.json();
+            if (data.tickets) {
+                document.getElementById('ticketCountBadge').innerText = data.tickets.length;
+                const rows = document.getElementById('ticketsRows');
+                if (data.tickets.length === 0) {
+                    rows.innerHTML = `<span style="color:#94a3b8;">No escalated tickets in SQLite database yet.</span>`;
+                } else {
+                    rows.innerHTML = data.tickets.slice(0, 5).map(t => `
+                        <div class="db-ticket-row">
+                            <span><strong>#${t.id}</strong>: ${escapeHtml(t.employee_question)}</span>
+                            <span style="color:#f59e0b; font-weight:800; font-size:0.75rem;">${t.status.toUpperCase()}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+        } catch(e) {}
+    }
+
+    function toggleTicketsFeed() {
+        const feed = document.getElementById('tickets-feed');
+        feed.style.display = feed.style.display === 'block' ? 'none' : 'block';
+        if (feed.style.display === 'block') fetchTickets();
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    renderSymptoms('laptop');
+    fetchTickets();
+</script>
+
+</body>
+</html>

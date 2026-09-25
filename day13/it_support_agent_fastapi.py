@@ -1,4 +1,3 @@
-from google import genai
 import os
 import time
 import json
@@ -6,20 +5,31 @@ import logging
 import sqlite3
 import numpy as np
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
 
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from google import genai
+
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tickets.db")
+TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
 
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__, template_folder=os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates"))
-limiter = Limiter(get_remote_address, app=app, default_limits=["60 per minute"])
+limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
+app = FastAPI(title="IT Support AI Agent (FastAPI)")
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -55,7 +65,6 @@ def call_with_retry(contents, max_retries=1):
             logger.warning(f"Attempt {attempt + 1} failed: {e}")
             if attempt < max_retries - 1:
                 time.sleep(1)
-    logger.error("All retry attempts failed")
     raise Exception("All retry attempts failed")
 
 def get_embedding(text):
@@ -98,8 +107,7 @@ def local_triage_fallback(issue):
     escalate_keywords = [
         "urgent", "emergency", "deadline", "meeting", "client",
         "won't turn on", "dead", "black screen", "smoke", "spill",
-        "coffee", "hardware", "burned", "hazard", "10 min", "blocked",
-        "charger emitted smoke"
+        "coffee", "hardware", "burned", "hazard", "10 min", "blocked"
     ]
     should_escalate = any(kw in issue_lower for kw in escalate_keywords)
 
@@ -133,19 +141,22 @@ def save_ticket(employee_question, decision):
     conn.commit()
     conn.close()
 
-@app.route("/")
-@app.route("/portal")
-@app.route("/support")
-def portal():
-    return render_template("support.html")
+class QuestionPayload(BaseModel):
+    question: str
 
-@app.route("/health")
-def health():
-    return jsonify({"status": "healthy", "service": "it-support-agent"})
+@app.get("/", response_class=HTMLResponse)
+@app.get("/portal", response_class=HTMLResponse)
+@app.get("/support", response_class=HTMLResponse)
+async def serve_ui(request: Request):
+    tpl = "portal.html" if os.path.exists(os.path.join(TEMPLATES_DIR, "portal.html")) else "support.html"
+    return templates.TemplateResponse(request=request, name=tpl)
 
-@app.route("/tickets", methods=["GET"])
-def tickets():
-    status = request.args.get("status")
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "service": "it-support-agent-fastapi"}
+
+@app.get("/tickets")
+async def get_tickets(status: str = None):
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -159,22 +170,20 @@ def tickets():
     rows = cursor.fetchall()
     tickets_list = [dict(row) for row in rows]
     conn.close()
-    return jsonify({"tickets": tickets_list, "count": len(tickets_list)})
+    return {"tickets": tickets_list, "count": len(tickets_list)}
 
-@app.route("/ask", methods=["POST"])
-def ask():
-    data = request.get_json(silent=True)
+@app.post("/ask")
+async def ask(payload: dict):
+    if not payload or "question" not in payload:
+        return JSONResponse(status_code=400, content={"error": "Missing 'question' field in request body"})
 
-    if not data or "question" not in data:
-        return jsonify({"error": "Missing 'question' field in request body"}), 400
-
-    issue = data.get("question", "").strip()
+    issue = str(payload.get("question", "")).strip()
 
     if not issue:
-        return jsonify({"error": "Question cannot be empty"}), 400
+        return JSONResponse(status_code=400, content={"error": "Question cannot be empty"})
 
     if len(issue) > 500:
-        return jsonify({"error": "Question too long (max 500 characters)"}), 400
+        return JSONResponse(status_code=400, content={"error": "Question too long (max 500 characters)"})
 
     prompt = f"""An employee reports: "{issue}"
 
@@ -207,9 +216,8 @@ Return ONLY valid JSON in this exact format, no other text:
         save_ticket(issue, decision["action"])
         result = escalate_to_technician(issue)
 
-    return jsonify({"decision": decision, "result": result})
+    return {"decision": decision, "result": result}
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    print(f"Starting IT Support AI Agent (Flask) on http://0.0.0.0:{port}...")
-    app.run(host="0.0.0.0", port=port, debug=True)
+    import uvicorn
+    uvicorn.run("it_support_agent_fastapi:app", host="0.0.0.0", port=8000, reload=True)
