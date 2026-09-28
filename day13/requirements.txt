@@ -5,3 +5,5 @@ numpy
 python-dotenv
 pytest
 flask-limiter
+pytest
+httpx

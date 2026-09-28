@@ -138,8 +138,10 @@ def save_ticket(employee_question, decision):
         "INSERT INTO tickets (employee_question, decision, status, created_at) VALUES (?, ?, ?, ?)",
         (employee_question, decision, "open", datetime.now().isoformat())
     )
+    ticket_id = cursor.lastrowid
     conn.commit()
     conn.close()
+    return ticket_id
 
 class QuestionPayload(BaseModel):
     question: str
@@ -210,13 +212,14 @@ Return ONLY valid JSON in this exact format, no other text:
         logger.warning(f"AI API call unavailable ({e}). Using instant local triage fallback.")
         decision = local_triage_fallback(issue)
 
+    ticket_id = None
     if decision["action"] == "provide_fix":
         result = provide_fix(issue)
     else:
-        save_ticket(issue, decision["action"])
+        ticket_id = save_ticket(issue, decision["action"])
         result = escalate_to_technician(issue)
 
-    return {"decision": decision, "result": result}
+    return {"decision": decision, "result": result, "ticket_id": ticket_id}
 
 if __name__ == "__main__":
     import uvicorn
