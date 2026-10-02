@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI IT Support Studio</title>
+    <title>AI IT Support and Escalation studio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -509,7 +509,7 @@
         <div class="header-brand">
             <div class="brand-avatar">🤖</div>
             <div class="brand-text">
-                <h1>AI IT Support Studio</h1>
+                <h1>AI IT Support and Escalation studio</h1>
                 <p>One-Click Automated Triage & RAG Self-Service Engine</p>
             </div>
         </div>
@@ -749,8 +749,37 @@
             const isFix = data.decision.action === 'provide_fix';
 
             if (isFix) {
-                const rawSteps = data.result.replace(/^Here's a suggested fix for '[^']+':\s*/i, '');
-                const stepParts = rawSteps.split(/,\s*(?=[A-Z])/).map(s => s.trim()).filter(Boolean);
+                let stepParts = [];
+                if (data.steps && data.steps.length > 0) {
+                    stepParts = data.steps;
+                } else {
+                    let clean = data.result.replace(/^Here's a suggested fix:?\s*('[^']+'\s*:\s*)?/i, '').trim();
+                    if (clean.includes(': ') && !clean.toLowerCase().startsWith('step')) {
+                        const parts = clean.split(/:\s+/);
+                        if (parts[0].length < 45) {
+                            clean = parts.slice(1).join(': ');
+                        }
+                    }
+
+                    let items = [];
+                    if (clean.includes('\n')) {
+                        items = clean.split('\n');
+                    } else if (clean.toLowerCase().includes('step ')) {
+                        items = clean.split(/step\s*\d+[:.]?\s*/i);
+                    } else {
+                        items = clean.split(/,\s*(?:and\s+)?|\.\s+/);
+                    }
+
+                    stepParts = items.map(s => {
+                        let str = s.trim().replace(/^(step\s*\d+[:.]?|\d+[\.\)]|-)\s*/i, '').replace(/^and\s+/i, '').trim();
+                        if (str.length > 3) {
+                            str = str.charAt(0).toUpperCase() + str.slice(1);
+                            if (!str.endsWith('.')) str += '.';
+                            return str;
+                        }
+                        return null;
+                    }).filter(Boolean);
+                }
 
                 const checklistHtml = stepParts.map((step, idx) => `
                     <label class="checklist-item" onclick="toggleCheck(this)">
@@ -763,7 +792,7 @@
                     <div class="resolution-card fix">
                         <div class="res-badge">🟢 Instant Resolution Found</div>
                         <div class="res-title">Self-Service Action Plan</div>
-                        <p style="font-size:0.88rem; color:#94a3b8; margin-bottom:14px;">Tick off each step as you complete it:</p>
+                        <p style="font-size:0.88rem; color:#94a3b8; margin-bottom:14px;">Resolution plan for: <span style="color:#f59e0b; font-weight:700;">"${escapeHtml(questionText)}"</span></p>
                         ${checklistHtml || `<div class="checklist-item"><span>${escapeHtml(data.result)}</span></div>`}
                         <div class="reason-callout">
                             💡 <strong>Why Self-Service:</strong> ${escapeHtml(data.decision.reason)}
@@ -771,6 +800,7 @@
                     </div>
                 `;
             } else {
+                const ticketNum = data.ticket_id ? `#${data.ticket_id}` : 'QUEUED';
                 display.innerHTML = `
                     <div class="resolution-card escalate">
                         <div class="res-badge">🚨 Escalated to IT Technician</div>
@@ -780,7 +810,7 @@
                         <div class="ticket-boarding-pass">
                             <div>
                                 <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Database Record</div>
-                                <div class="ticket-num">Status: OPEN • PRIORITY 1</div>
+                                <div class="ticket-num">Ticket ${ticketNum} • Status: OPEN • PRIORITY 1</div>
                             </div>
                             <div style="font-size:1.8rem;">🎫</div>
                         </div>
@@ -847,6 +877,18 @@
         if (!str) return '';
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+
+    window.switchMode = switchMode;
+    window.pickDomain = pickDomain;
+    window.pickUrgency = pickUrgency;
+    window.launchDiagnosis = launchDiagnosis;
+    window.toggleTicketsFeed = toggleTicketsFeed;
+
+    document.querySelectorAll('.mode-tab').forEach((tab, index) => {
+        tab.addEventListener('click', () => {
+            switchMode(index === 0 ? 'guided' : 'custom');
+        });
+    });
 
     renderSymptoms('laptop');
     fetchTickets();

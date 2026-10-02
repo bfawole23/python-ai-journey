@@ -1,3 +1,4 @@
+from google import genai
 import os
 import time
 import json
@@ -5,31 +6,29 @@ import logging
 import sqlite3
 import numpy as np
 from datetime import datetime
-from dotenv import load_dotenv
-
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-from google import genai
-
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tickets.db")
-TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "templates")
+from dotenv import load_dotenv
 
 load_dotenv()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
-app = FastAPI(title="IT Support AI Agent (FastAPI)")
+app = FastAPI()
+limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "tickets.db")
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
+
 
 def init_db():
     conn = sqlite3.connect(DB_PATH)
@@ -46,12 +45,15 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 init_db()
+
 
 def get_client():
     return genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-def call_with_retry(contents, max_retries=1):
+
+def call_with_retry(contents, max_retries=2):
     client = get_client()
     for attempt in range(max_retries):
         try:
@@ -65,7 +67,18 @@ def call_with_retry(contents, max_retries=1):
             logger.warning(f"Attempt {attempt + 1} failed: {e}")
             if attempt < max_retries - 1:
                 time.sleep(1)
+    logger.error("All retry attempts failed")
     raise Exception("All retry attempts failed")
+
+
+def parse_json_response(text):
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.strip("`")
+        if cleaned.lower().startswith("json"):
+            cleaned = cleaned[4:]
+    return json.loads(cleaned.strip())
+
 
 def get_embedding(text):
     client = get_client()
@@ -75,61 +88,125 @@ def get_embedding(text):
     )
     return np.array(result.embeddings[0].values)
 
+
 def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
 
+
 knowledge_base = [
     "VPN connection issues: Restart the VPN client, confirm you're on a stable internet connection, and verify your credentials haven't expired.",
-    "Password reset: Go to the self-service portal at portal.company.com/reset, enter your employee ID, and follow the email verification steps.",
+    "Password reset or locked account: Go to the self-service portal at portal.company.com/reset, enter your employee ID, and follow the email verification steps.",
     "Printer not responding: Check the printer is powered on and connected to the network. Restart the print spooler service on your machine.",
     "Slow computer performance: Restart the machine, check for pending updates, and close unused background applications.",
-    "Wi-Fi connection issues: Toggle Wi-Fi off and on, forget and rejoin the network, or flush DNS cache with 'ipconfig /flushdns'.",
-    "Outlook password loop: Clear cached Office credentials in Windows Credential Manager, restart Outlook in safe mode, or re-authenticate modern auth.",
-    "External monitor not detected: Re-seat HDMI/DisplayPort cable, press Win+P to select 'Extend', and check GPU display drivers.",
-    "Headset microphone not working: Check system privacy permissions for microphone access, set headset as default recording device in sound settings.",
-    "Disk storage full: Run Windows Disk Cleanup, empty Recycle Bin, and clear temporary files in %TEMP%."
+    "Full disk or low storage: Empty the Recycle Bin, run Disk Cleanup or Storage Sense, uninstall unused applications, and move large files to OneDrive or an external drive.",
+    "Wi-Fi connected but no internet: Forget and rejoin the Wi-Fi network, restart the router or move closer to the access point, run the network troubleshooter, and flush DNS with ipconfig /flushdns.",
+    "MFA code not arriving: Check phone signal and Do Not Disturb settings, confirm the authenticator app time is synced, request a new code after 60 seconds, or use a backup verification method.",
+    "External monitor not detected: Check the cable and input source, press Windows+P and choose Extend, update the graphics driver, and try another port or cable.",
+    "Headset microphone not working in meetings: Select the headset as the input device in Teams or Zoom settings, make sure it is not muted, allow microphone access in Windows privacy settings, and reconnect the headset.",
+    "Outlook asking for password or not syncing: Sign out and back in, clear cached credentials in Credential Manager, make sure Offline mode is off, and recreate the Outlook profile if it continues.",
+    "Teams crashing during screen share: Fully quit and reopen Teams, clear the Teams cache folder, update Teams and Windows, and share a single window instead of the whole screen.",
+    "Browser certificate warning: Check the device date and time are correct, clear the browser cache and SSL state, try another browser, and report it to IT if it appears on internal corporate sites.",
+    "Docking station or USB hub not working: Unplug the dock and power cycle it, connect the cable directly to the laptop, update the dock firmware and drivers, and test a different port.",
 ]
 
-def search_knowledge_base(query):
-    query_words = [w.lower() for w in query.replace("'", "").replace('"', "").replace(":", "").replace("-", " ").split() if len(w) > 2]
-    best_doc = None
-    max_matches = 0
+STOP_WORDS = {
+    "is", "not", "the", "a", "an", "my", "our", "to", "in", "on", "for", 
+    "of", "and", "or", "it", "with", "working", "issue", "problem", "broken",
+    "having", "wont", "cant", "doesnt", "getting", "type", "typed", "help"
+}
+
+DOMAIN_KEYWORDS = {
+    "vpn": "vpn", "cisco": "vpn", "tunnel": "vpn",
+    "wifi": "wi-fi", "wi-fi": "wi-fi", "internet": "wi-fi", "network": "wi-fi", "dns": "wi-fi",
+    "headset": "headset", "microphone": "headset", "mic": "headset", "audio": "headset", "sound": "headset",
+    "printer": "printer", "print": "printer", "printing": "printer", "spooler": "printer",
+    "password": "password", "reset": "password", "locked": "password", "login": "password", "account": "password",
+    "monitor": "external monitor", "screen": "external monitor", "display": "external monitor", "hdmi": "external monitor",
+    "teams": "teams", "outlook": "outlook", "email": "outlook",
+    "disk": "disk", "storage": "disk", "drive": "disk", "full": "disk",
+    "dock": "docking", "docking": "docking", "usb": "docking", "hub": "docking",
+    "mfa": "mfa", "2fa": "mfa", "code": "mfa", "authenticator": "mfa",
+    "browser": "browser", "certificate": "browser", "ssl": "browser"
+}
+
+_kb_embeddings = None
+
+
+def fallback_keyword_search(query):
+    query_clean = query.lower().replace("'", "").replace('"', "").replace(":", " ").replace("-", " ")
+    words = [w for w in query_clean.split() if len(w) > 1 and w not in STOP_WORDS]
+    best_doc = knowledge_base[0]
+    best_score = -1
     for doc in knowledge_base:
         doc_lower = doc.lower()
-        matches = sum(1 for w in query_words if w in doc_lower)
-        if matches > max_matches:
-            max_matches = matches
+        title = doc_lower.split(":")[0] if ":" in doc_lower else ""
+        body = doc_lower.split(":", 1)[1] if ":" in doc_lower else doc_lower
+        score = 0
+        for w in words:
+            domain = DOMAIN_KEYWORDS.get(w)
+            if domain and domain in title:
+                score += 150
+            elif w in title:
+                score += 80
+            elif w in body:
+                score += 20
+        if score > best_score:
+            best_score = score
             best_doc = doc
-    return best_doc if max_matches > 0 else knowledge_base[0]
+    return best_doc, 0.85 if best_score > 0 else 0.5
+
+
+def search_knowledge_base_scored(query):
+    global _kb_embeddings
+    try:
+        if _kb_embeddings is None:
+            _kb_embeddings = [get_embedding(doc) for doc in knowledge_base]
+        query_embedding = get_embedding(query)
+        scores = [cosine_similarity(query_embedding, e) for e in _kb_embeddings]
+        best_index = int(np.argmax(scores))
+        return knowledge_base[best_index], float(scores[best_index])
+    except Exception as e:
+        logger.warning(f"Embedding search unavailable ({e}). Using keyword search.")
+        return fallback_keyword_search(query)
+
+
+def search_knowledge_base(query):
+    return search_knowledge_base_scored(query)[0]
+
 
 def local_triage_fallback(issue):
     issue_lower = issue.lower()
     escalate_keywords = [
         "urgent", "emergency", "deadline", "meeting", "client",
         "won't turn on", "dead", "black screen", "smoke", "spill",
-        "coffee", "hardware", "burned", "hazard", "10 min", "blocked"
+        "coffee", "hardware", "burned", "hazard", "10 min", "blocked",
+        "charger emitted smoke", "shattered", "water", "liquid"
     ]
     should_escalate = any(kw in issue_lower for kw in escalate_keywords)
 
     if should_escalate:
         return {
             "action": "escalate_to_technician",
-            "reason": "High business urgency, physical hardware fault, or critical deadline detected by triage engine."
+            "reason": "High business urgency, physical hardware fault, or critical deadline detected by triage engine.",
+            "steps": []
         }
     else:
+        doc, _score = search_knowledge_base_scored(issue)
+        steps = [s.strip() for s in doc.split(":", 1)[1].split(",") if s.strip()] if ":" in doc else [doc]
         return {
             "action": "provide_fix",
-            "reason": "Common self-resolvable issue detected; matched against IT knowledge base."
+            "reason": "Common self-resolvable issue detected; matched against IT knowledge base.",
+            "steps": steps
         }
 
+
 def provide_fix(issue_summary):
-    relevant_doc = search_knowledge_base(issue_summary)
-    if relevant_doc:
-        return f"Here's a suggested fix for '{issue_summary}': {relevant_doc}"
     return f"Here's a suggested fix: {issue_summary}"
+
 
 def escalate_to_technician(issue_description):
     return f"This issue has been logged and escalated to a technician: '{issue_description}'"
+
 
 def save_ticket(employee_question, decision):
     conn = sqlite3.connect(DB_PATH)
@@ -138,86 +215,97 @@ def save_ticket(employee_question, decision):
         "INSERT INTO tickets (employee_question, decision, status, created_at) VALUES (?, ?, ?, ?)",
         (employee_question, decision, "open", datetime.now().isoformat())
     )
+    ticket_id = cursor.lastrowid
     conn.commit()
     conn.close()
+    return ticket_id
 
-class QuestionPayload(BaseModel):
-    question: str
+
+def get_all_tickets():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, employee_question, decision, status, created_at FROM tickets ORDER BY id DESC")
+    rows = cursor.fetchall()
+    conn.close()
+    return [
+        {"id": r[0], "employee_question": r[1], "decision": r[2], "status": r[3], "created_at": r[4]}
+        for r in rows
+    ]
+
+
+class AskRequest(BaseModel):
+    question: str | None = None
+
 
 @app.get("/", response_class=HTMLResponse)
 @app.get("/portal", response_class=HTMLResponse)
 @app.get("/support", response_class=HTMLResponse)
-async def serve_ui(request: Request):
-    tpl = "portal.html" if os.path.exists(os.path.join(TEMPLATES_DIR, "portal.html")) else "support.html"
-    return templates.TemplateResponse(request=request, name=tpl)
+def portal(request: Request):
+    return templates.TemplateResponse(request, "portal.html")
+
 
 @app.get("/health")
-async def health():
-    return {"status": "healthy", "service": "it-support-agent-fastapi"}
+def health():
+    return {"status": "healthy", "service": "it-support-agent"}
+
 
 @app.get("/tickets")
-async def get_tickets(status: str = None):
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
-    if status:
-        cursor.execute(
-            "SELECT id, employee_question, decision, status, created_at FROM tickets WHERE status = ? ORDER BY id DESC",
-            (status,)
-        )
-    else:
-        cursor.execute("SELECT id, employee_question, decision, status, created_at FROM tickets ORDER BY id DESC")
-    rows = cursor.fetchall()
-    tickets_list = [dict(row) for row in rows]
-    conn.close()
-    return {"tickets": tickets_list, "count": len(tickets_list)}
+def tickets():
+    return {"tickets": get_all_tickets()}
+
 
 @app.post("/ask")
-async def ask(payload: dict):
-    if not payload or "question" not in payload:
-        return JSONResponse(status_code=400, content={"error": "Missing 'question' field in request body"})
+@limiter.limit("20/hour")
+def ask(request: Request, payload: AskRequest):
+    if payload.question is None:
+        return JSONResponse({"error": "Missing 'question' field in request body"}, status_code=400)
 
-    issue = str(payload.get("question", "")).strip()
+    issue = payload.question.strip()
 
     if not issue:
-        return JSONResponse(status_code=400, content={"error": "Question cannot be empty"})
+        return JSONResponse({"error": "Question cannot be empty"}, status_code=400)
 
     if len(issue) > 500:
-        return JSONResponse(status_code=400, content={"error": "Question too long (max 500 characters)"})
+        return JSONResponse({"error": "Question too long (max 500 characters)"}, status_code=400)
+
+    reference, _score = search_knowledge_base_scored(issue)
 
     prompt = f"""An employee reports: "{issue}"
 
+Possibly relevant knowledge base entry (use it ONLY if it clearly matches the issue, otherwise ignore it and use general IT knowledge):
+"{reference}"
+
 Decide the action:
-- Use "provide_fix" ONLY for common, self-resolvable issues (VPN hiccups, printer issues, password resets, slow performance) with no major time pressure.
-- Use "escalate_to_technician" if the issue involves: hardware failure, complete inability to work, urgent business deadlines/client-facing situations, or anything a quick fix likely won't solve in time.
+- Use "provide_fix" for common, self-resolvable issues with no major time pressure.
+- Use "escalate_to_technician" if the issue involves: hardware failure or damage, complete inability to work, urgent business deadlines or client-facing situations, safety hazards (smoke, burning smell, liquid spills), or anything a quick fix likely won't solve in time.
+
+If the action is "provide_fix", give 3 to 5 short, concrete steps written specifically for this employee's issue.
+If the action is "escalate_to_technician", steps must be an empty list.
 
 Return ONLY valid JSON in this exact format, no other text:
 {{
   "action": "provide_fix" or "escalate_to_technician",
-  "reason": "why this action was chosen"
+  "reason": "one sentence explaining why",
+  "steps": ["step one", "step two"]
 }}"""
 
-    decision = None
     try:
-        response = call_with_retry(prompt, max_retries=1)
-        raw_text = response.text.strip()
-        if raw_text.startswith("```"):
-            raw_text = raw_text.split("```")[1]
-            if raw_text.startswith("json"):
-                raw_text = raw_text[4:]
-        decision = json.loads(raw_text.strip())
+        response = call_with_retry(prompt)
+        decision = parse_json_response(response.text)
     except Exception as e:
-        logger.warning(f"AI API call unavailable ({e}). Using instant local triage fallback.")
+        logger.warning(f"AI request unavailable ({e}). Using local triage fallback.")
         decision = local_triage_fallback(issue)
 
-    if decision["action"] == "provide_fix":
-        result = provide_fix(issue)
+    ticket_id = None
+    if decision.get("action") == "provide_fix":
+        steps = [str(s) for s in decision.get("steps", []) if s]
+        if not steps:
+            steps = [reference]
+        result = provide_fix("; ".join(steps))
     else:
-        save_ticket(issue, decision["action"])
+        decision["action"] = "escalate_to_technician"
+        steps = []
+        ticket_id = save_ticket(issue, decision["action"])
         result = escalate_to_technician(issue)
 
-    return {"decision": decision, "result": result}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run("it_support_agent_fastapi:app", host="0.0.0.0", port=8000, reload=True)
+    return {"decision": decision, "result": result, "steps": steps, "ticket_id": ticket_id}
