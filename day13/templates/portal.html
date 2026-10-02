@@ -697,6 +697,7 @@
 
     async function launchDiagnosis() {
         let questionText = '';
+        let hintType = null;
 
         if (currentMode === 'guided') {
             if (!selectedSymptom) {
@@ -704,10 +705,11 @@
                 return;
             }
             questionText = selectedSymptom.prompt;
+            hintType = selectedSymptom.type;
             if (selectedUrgency === 'urgent') {
                 questionText += " Urgent: client meeting in 10 minutes!";
             } else if (selectedUrgency === 'medium') {
-                questionText += " Work is currently blocked.";
+                questionText += " Priority: High (employee waiting for immediate resolution).";
             }
         } else {
             questionText = document.getElementById('customInput').value.trim();
@@ -730,7 +732,11 @@
             const res = await fetch('/ask', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question: questionText })
+                body: JSON.stringify({ 
+                    question: questionText,
+                    urgency: selectedUrgency,
+                    action_hint: hintType
+                })
             });
 
             const data = await res.json();

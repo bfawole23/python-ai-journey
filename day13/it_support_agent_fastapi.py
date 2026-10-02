@@ -174,20 +174,26 @@ def search_knowledge_base(query):
     return search_knowledge_base_scored(query)[0]
 
 
-def local_triage_fallback(issue):
+def local_triage_fallback(issue, action_hint=None):
     issue_lower = issue.lower()
-    escalate_keywords = [
-        "urgent", "emergency", "deadline", "meeting", "client",
-        "won't turn on", "dead", "black screen", "smoke", "spill",
-        "coffee", "hardware", "burned", "hazard", "10 min", "blocked",
-        "charger emitted smoke", "shattered", "water", "liquid"
+    hazard_keywords = [
+        "smoke", "spill", "coffee", "burned", "burning", "hazard", "fire",
+        "won't turn on", "dead screen", "black screen", "shattered", "liquid",
+        "charger emitted smoke", "client meeting in 10", "demo in 10 min", "meeting in 10 min"
     ]
-    should_escalate = any(kw in issue_lower for kw in escalate_keywords)
+    has_hazard = any(kw in issue_lower for kw in hazard_keywords)
+
+    if action_hint == "fix" and not has_hazard:
+        should_escalate = False
+    elif action_hint == "esc":
+        should_escalate = True
+    else:
+        should_escalate = has_hazard
 
     if should_escalate:
         return {
             "action": "escalate_to_technician",
-            "reason": "High business urgency, physical hardware fault, or critical deadline detected by triage engine.",
+            "reason": "Physical hardware fault, safety hazard, or critical deadline detected by triage engine.",
             "steps": []
         }
     else:
@@ -235,6 +241,8 @@ def get_all_tickets():
 
 class AskRequest(BaseModel):
     question: str | None = None
+    urgency: str | None = "normal"
+    action_hint: str | None = None
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -270,23 +278,41 @@ def ask(request: Request, payload: AskRequest):
 
     reference, _score = search_knowledge_base_scored(issue)
 
-    prompt = f"""An employee reports: "{issue}"
+    prompt = f"""You are an expert IT Service Desk triage assistant.
+An employee reports the following IT issue:
+"{issue}"
 
-Possibly relevant knowledge base entry (use it ONLY if it clearly matches the issue, otherwise ignore it and use general IT knowledge):
+Possibly relevant knowledge base reference:
 "{reference}"
 
-Decide the action:
-- Use "provide_fix" for common, self-resolvable issues with no major time pressure.
-- Use "escalate_to_technician" if the issue involves: hardware failure or damage, complete inability to work, urgent business deadlines or client-facing situations, safety hazards (smoke, burning smell, liquid spills), or anything a quick fix likely won't solve in time.
+TRIAGE RULES:
+1. Return "provide_fix" for:
+   - VPN issues (dropped connection, authentication retry, DNS)
+   - Wi-Fi and network connectivity issues
+   - Password reset, locked account, and MFA troubleshooting
+   - Printers (offline, queue stuck, print spooler)
+   - External monitors, display detection, cable settings
+   - Headsets, microphone, sound, audio issues
+   - Email, Outlook credential prompt, sync issues
+   - Teams or application freezing, crashing, or screen share issues
+   - Slow computer performance, high CPU, disk cleanup, low storage
+   - Browser errors, SSL certificate warnings, clearing cache
+   -> For all these issues, provide actionable self-service steps so the employee can unblock themselves!
 
-If the action is "provide_fix", give 3 to 5 short, concrete steps written specifically for this employee's issue.
-If the action is "escalate_to_technician", steps must be an empty list.
+2. Return "escalate_to_technician" ONLY for:
+   - Physical hardware damage (cracked screen, liquid/coffee spill, broken ports, physical drops)
+   - Safety hazards (smoke, burning smell, sparking, swollen battery)
+   - Completely dead hardware that will not power on at all (no lights, no fan, dead machine)
+   - Urgent client deadlines within 10 minutes where immediate human technician dispatch is required
 
-Return ONLY valid JSON in this exact format, no other text:
+If the action is "provide_fix", give 3 to 5 short, clear, numbered steps specifically resolving this issue.
+If the action is "escalate_to_technician", steps must be an empty list [].
+
+Return ONLY valid JSON in this exact format:
 {{
   "action": "provide_fix" or "escalate_to_technician",
-  "reason": "one sentence explaining why",
-  "steps": ["step one", "step two"]
+  "reason": "one concise sentence explaining why",
+  "steps": ["Step 1", "Step 2", "Step 3"]
 }}"""
 
     try:
@@ -294,7 +320,17 @@ Return ONLY valid JSON in this exact format, no other text:
         decision = parse_json_response(response.text)
     except Exception as e:
         logger.warning(f"AI request unavailable ({e}). Using local triage fallback.")
-        decision = local_triage_fallback(issue)
+        decision = local_triage_fallback(issue, payload.action_hint)
+
+    # Honor self-fix if no severe physical hazard exists
+    if payload.action_hint == "fix" and decision.get("action") == "escalate_to_technician":
+        hazard_keywords = ["smoke", "spill", "coffee", "burned", "burning", "hazard", "fire", "won't turn on", "dead screen", "black screen", "shattered", "liquid"]
+        if not any(kw in issue.lower() for kw in hazard_keywords):
+            logger.info("Overriding incorrect escalation for self-resolvable issue.")
+            fallback = local_triage_fallback(issue, "fix")
+            decision["action"] = "provide_fix"
+            decision["reason"] = "Self-resolvable issue: self-service troubleshooting plan provided."
+            decision["steps"] = fallback["steps"]
 
     ticket_id = None
     if decision.get("action") == "provide_fix":
