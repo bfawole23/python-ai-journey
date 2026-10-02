@@ -1,9 +1,10 @@
-flask
+fastapi
+uvicorn
 google-genai
-gunicorn
 numpy
 python-dotenv
-pytest
-flask-limiter
+slowapi
+jinja2
+python-multipart
 pytest
 httpx
