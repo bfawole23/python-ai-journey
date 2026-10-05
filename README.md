@@ -22,14 +22,14 @@ The capstone project is an autonomous IT Support Agent built with Flask, Google 
 
 ---
 
-## 🛣️ The 20-Day Learning Roadmap
+## 🛣️ The 24-Day Learning Roadmap
 
 | Phase | Days | Focus Topics |
 | :--- | :--- | :--- |
 | **Python Core Fundamentals** | Days 1–5 | Variables, control flow, functions, modular architecture, data structures (`list`, `dict`), file operations (reading/writing `.txt` & `.csv`), and robust error handling (`try/except`). |
 | **Data & Scientific Computing** | Days 6–8 | NumPy vectorization, Pandas DataFrames (filtering, sorting, aggregations), and Matplotlib visualizations (histograms, distributions). |
 | **Generative AI & LLM Systems** | Days 9–12 | Gemini API integration, prompt engineering, structured JSON outputs, autonomous agent loops, vector embeddings, and RAG semantic search. |
-| **Capstone Engineering** | Days 13–20 | Flask RESTful service, secrets management (`python-dotenv`), Docker containerization, pytest suite & GitHub Actions CI, health monitoring & structured logging, rate limiting & input validation, SQLite persistence. |
+| **Capstone Engineering** | Days 13–24 | FastAPI ASGI service, universal IT problem analyzer, RAG knowledge retrieval, SQLite ticket lifecycle, Engineer Command Center dashboard, failed self-fix escalation, clean white theme, Docker containerization, pytest test suite (32 tests) & CI/CD. |
 
 ---
 

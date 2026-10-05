@@ -1,4 +1,11 @@
-flask
+fastapi
+uvicorn
 google-genai
-gunicorn
 numpy
+python-dotenv
+slowapi
+jinja2
+python-multipart
+pytest
+httpx
+gunicorn

@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Engineer Command Center | AI IT Support</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #d97706;
+            --primary-glow: rgba(217, 119, 6, 0.2);
+            --accent: #b45309;
+            --accent-glow: rgba(180, 83, 9, 0.2);
+            --emerald: #059669;
+            --emerald-glow: rgba(5, 150, 105, 0.2);
+            --rose: #dc2626;
+            --rose-glow: rgba(220, 38, 38, 0.2);
+            --bg-light: #ffffff;
+            --card-surface: #ffffff;
+            --card-border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-subtle: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.08) 0px, transparent 45%),
+                radial-gradient(at 100% 0%, rgba(217, 119, 6, 0.06) 0px, transparent 45%),
+                radial-gradient(at 50% 100%, rgba(245, 158, 11, 0.04) 0px, transparent 45%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 24px 16px 40px;
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+        }
+
+        .dashboard-container {
+            width: 100%;
+            max-width: 1100px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 28px;
+            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            animation: floatUp 0.35s ease-out;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes floatUp {
+            from { opacity: 0; transform: translateY(14px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Top Header */
+        .header {
+            padding: 24px 32px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-avatar {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+        }
+
+        .brand-text h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+        }
+
+        .brand-text p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .sync-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #b45309;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+        }
+
+        .sync-pill:hover {
+            background: #fef3c7;
+        }
+
+        .sync-pill.off {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: var(--text-muted);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #f59e0b;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #f59e0b;
+            animation: pulseGlow 1.8s infinite;
+        }
+
+        .sync-pill.off .pulse-dot {
+            background: #94a3b8;
+            box-shadow: none;
+            animation: none;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.8; }
+        }
+
+        .btn-refresh {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            color: #1e293b;
+            padding: 7px 14px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-refresh:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .btn-portal-link {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #b45309;
+            padding: 7px 16px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-portal-link:hover {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+            transform: translateY(-1px);
+        }
+
+        /* KPI Stat Ribbon */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            padding: 24px 32px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 16px 20px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: #cbd5e1;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stat-value {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1;
+        }
+
+        .stat-card.open-card .stat-value {
+            color: #d97706;
+        }
+
+        .stat-card.resolved-card .stat-value {
+            color: #059669;
+        }
+
+        .stat-sub {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Filter & Search Bar */
+        .controls-bar {
+            padding: 20px 32px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 14px;
+            background: #ffffff;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-tab {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-tab:hover {
+            color: #0f172a;
+            background: #f1f5f9;
+        }
+
+        .filter-tab.active {
+            background: #fffbeb;
+            border-color: #f59e0b;
+            color: #b45309;
+            box-shadow: 0 1px 4px rgba(245, 158, 11, 0.15);
+        }
+
+        .tab-count {
+            background: #e2e8f0;
+            color: #334155;
+            padding: 2px 7px;
+            border-radius: 9999px;
+            font-size: 0.72rem;
+        }
+
+        .filter-tab.active .tab-count {
+            background: #fde68a;
+            color: #92400e;
+        }
+
+        .search-box {
+            position: relative;
+            flex: 1;
+            max-width: 380px;
+            min-width: 240px;
+        }
+
+        .search-input {
+            width: 100%;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 9px 36px 9px 36px;
+            color: #0f172a;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .search-input:focus {
+            background: #ffffff;
+            border-color: #d97706;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            pointer-events: none;
+        }
+
+        .search-clear {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.85rem;
+            display: none;
+        }
+
+        /* Incident List / Content Area */
+        .incident-queue {
+            padding: 12px 32px 32px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 320px;
+            background: #ffffff;
+        }
+
+        .ticket-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #f59e0b;
+            border-radius: 16px;
+            padding: 20px 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s;
+            animation: cardAppear 0.25s ease-out;
+        }
+
+        @keyframes cardAppear {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ticket-card:hover {
+            border-color: #cbd5e1;
+            border-left-color: #f59e0b;
+            box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.08);
+        }
+
+        .ticket-card.resolved {
+            border-left-color: #059669;
+            background: #fcfdfd;
+        }
+
+        .ticket-card.resolved:hover {
+            border-left-color: #059669;
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .ticket-badges {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .id-badge {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #334155;
+            background: #f1f5f9;
+            padding: 3px 10px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .status-badge {
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-badge.open {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #b45309;
+        }
+
+        .status-badge.resolved {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #059669;
+        }
+
+        .urgency-badge {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background: #fff7ed;
+            border: 1px solid #ffedd5;
+            color: #c2410c;
+        }
+
+        .urgency-badge.critical {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+            animation: urgentPulse 2s infinite;
+        }
+
+        @keyframes urgentPulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+
+        .ticket-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .ticket-body {
+            margin-bottom: 16px;
+        }
+
+        .ticket-issue {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #0f172a;
+            line-height: 1.45;
+            background: #f8fafc;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            margin-bottom: 8px;
+        }
+
+        .ticket-resolution-box {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+
+        .ticket-resolution-title {
+            color: #059669;
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .ticket-resolution-text {
+            color: #064e3b;
+            line-height: 1.4;
+        }
+
+        .ticket-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 14px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .ticket-decision-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .ticket-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-resolve {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            border: none;
+            color: #ffffff;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 7px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(217, 119, 6, 0.25);
+        }
+
+        .btn-resolve:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(217, 119, 6, 0.35);
+        }
+
+        .btn-quick-resolve {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #059669;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 7px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-quick-resolve:hover {
+            background: #d1fae5;
+            border-color: #059669;
+        }
+
+        .btn-reopen {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            font-size: 0.82rem;
+            font-weight: 700;
+            padding: 7px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-reopen:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        /* Empty States */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            border-radius: 18px;
+            margin-top: 10px;
+        }
+
+        .empty-icon {
+            font-size: 42px;
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+
+        .empty-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+
+        .empty-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-card {
+            width: 100%;
+            max-width: 520px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 22px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.2);
+            padding: 28px;
+            animation: modalPop 0.2s ease-out;
+        }
+
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .modal-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .modal-close:hover {
+            color: #0f172a;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .modal-preview {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: #334155;
+            margin-bottom: 16px;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        .modal-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .modal-textarea {
+            width: 100%;
+            height: 100px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 12px;
+            color: #0f172a;
+            font-size: 0.88rem;
+            outline: none;
+            resize: vertical;
+            transition: all 0.2s;
+        }
+
+        .modal-textarea:focus {
+            background: #ffffff;
+            border-color: #d97706;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+        }
+
+        .preset-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+
+        .preset-chip {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-chip:hover {
+            background: #fffbeb;
+            border-color: #fde68a;
+            color: #b45309;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-modal-cancel {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            padding: 9px 18px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-modal-submit {
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            color: #ffffff;
+            padding: 9px 20px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.25);
+            transition: all 0.2s;
+        }
+
+        .btn-modal-submit:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+        }
+
+        /* Toast Alert */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .toast {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 12px 18px;
+            color: #ffffff;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: toastIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Footer */
+        .footer {
+            padding: 18px 32px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            background: #f8fafc;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* Responsiveness */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 16px;
+            }
+            .header, .controls-bar, .incident-queue, .footer {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+            .brand-text h1 {
+                font-size: 1.15rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-brand">
+            <div class="brand-avatar">🛠️</div>
+            <div class="brand-text">
+                <h1>IT Engineer Command Center</h1>
+                <p>Live Escalation Queue • Resolution & Triage Dispatch</p>
+            </div>
+        </div>
+
+        <div class="header-actions">
+            <div class="sync-pill" id="syncPill" onclick="toggleAutoSync()">
+                <span class="pulse-dot"></span>
+                <span id="syncText">Auto-Sync 5s</span>
+            </div>
+            <button class="btn-refresh" id="btnRefresh" onclick="manualRefresh()">
+                <span id="refreshIcon">↻</span> Refresh
+            </button>
+            <a href="/portal" class="btn-portal-link">
+                👤 Employee Portal →
+            </a>
+        </div>
+    </header>
+
+    <!-- KPI Metrics Ribbon -->
+    <section class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">
+                <span>Total Escalated</span>
+                <span>📊</span>
+            </div>
+            <div class="stat-value" id="kpiTotal">0</div>
+            <div class="stat-sub">Logged in tickets.db</div>
+        </div>
+
+        <div class="stat-card open-card">
+            <div class="stat-label">
+                <span>Open Incidents</span>
+                <span>⚠️</span>
+            </div>
+            <div class="stat-value" id="kpiOpen">0</div>
+            <div class="stat-sub">Awaiting engineer action</div>
+        </div>
+
+        <div class="stat-card resolved-card">
+            <div class="stat-label">
+                <span>Resolved</span>
+                <span>✅</span>
+            </div>
+            <div class="stat-value" id="kpiResolved">0</div>
+            <div class="stat-sub">Completed & verified</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-label">
+                <span>Resolution Rate</span>
+                <span>🎯</span>
+            </div>
+            <div class="stat-value" id="kpiRate">0%</div>
+            <div class="stat-sub">Team closure efficiency</div>
+        </div>
+    </section>
+
+    <!-- Filters & Search Toolbar -->
+    <section class="controls-bar">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-status="open" onclick="setStatusFilter('open', this)">
+                ⚠️ Open Only <span class="tab-count" id="countOpenTab">0</span>
+            </button>
+            <button class="filter-tab" data-status="all" onclick="setStatusFilter('all', this)">
+                📁 All Incidents <span class="tab-count" id="countAllTab">0</span>
+            </button>
+            <button class="filter-tab" data-status="resolved" onclick="setStatusFilter('resolved', this)">
+                ✅ Resolved <span class="tab-count" id="countResolvedTab">0</span>
+            </button>
+        </div>
+
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input 
+                type="text" 
+                class="search-input" 
+                id="searchInput" 
+                placeholder="Search ticket #ID, symptom, or notes..."
+                oninput="onSearchInput()"
+            >
+            <span class="search-clear" id="searchClear" onclick="clearSearch()">✕</span>
+        </div>
+    </section>
+
+    <!-- Incident Cards Queue -->
+    <main class="incident-queue" id="incidentQueue">
+        <div class="empty-state">
+            <div class="empty-icon">⏳</div>
+            <div class="empty-title">Loading Escalated Incidents...</div>
+            <div class="empty-desc">Connecting to SQLite ticket database...</div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <span>SQLite Persistent Storage: <code>day13/tickets.db</code></span>
+        <span>AI IT Support Studio • FastAPI Engineer Dispatcher</span>
+    </footer>
+</div>
+
+<!-- Resolution Modal -->
+<div class="modal-overlay" id="resolutionModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <div class="modal-title" id="modalTitle">Resolve Incident #0</div>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="modal-preview" id="modalIssuePreview">Issue description...</div>
+            
+            <label class="modal-label" for="engineerNotes">Engineer Resolution Notes</label>
+            <textarea 
+                id="engineerNotes" 
+                class="modal-textarea" 
+                placeholder="Detail the steps taken to fix the issue (e.g., replaced cable, reset domain profile, cleaned fan vent)..."
+            ></textarea>
+
+            <div class="preset-chips">
+                <span class="preset-chip" onclick="insertPreset('Hardware component replaced & tested OK')">+ Hardware Replaced</span>
+                <span class="preset-chip" onclick="insertPreset('Cleared cached credentials & re-authenticated')">+ Reset Credentials</span>
+                <span class="preset-chip" onclick="insertPreset('Dispatched engineer on-site; user unblocked')">+ On-Site Dispatch</span>
+                <span class="preset-chip" onclick="insertPreset('Power cycled dock and updated display firmware')">+ Dock/Display Fix</span>
+                <span class="preset-chip" onclick="insertPreset('Liquid clean protocol completed, diagnostics passed')">+ Liquid Cleanup</span>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-modal-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-modal-submit" id="btnSubmitResolution" onclick="confirmResolution()">
+                ✓ Confirm Resolution
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+    // State management
+    let currentFilter = 'open';
+    let searchQuery = '';
+    let autoSyncActive = true;
+    let syncIntervalId = null;
+    let allTickets = [];
+    let currentResolvingId = null;
+
+    // Relative timestamp helper
+    function formatTime(isoString) {
+        if (!isoString) return '';
+        try {
+            const date = new Date(isoString);
+            if (isNaN(date.getTime())) return isoString;
+            
+            const now = new Date();
+            const diffSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffSeconds < 60) return 'Just now';
+            if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
+            if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`;
+            
+            return date.toLocaleDateString(undefined, { 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+        } catch (e) {
+            return isoString;
+        }
+    }
+
+    function isCriticalHazard(text) {
+        if (!text) return false;
+        const lower = text.toLowerCase();
+        const keywords = ['smoke', 'burning', 'spill', 'coffee', 'fire', 'hazard', 'battery', 'dead', '10 min', '10m', 'shattered'];
+        return keywords.some(kw => lower.includes(kw));
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    // Toast notification
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        const icon = type === 'success' ? '✅' : (type === 'reopen' ? '↩️' : 'ℹ️');
+        toast.innerHTML = `<span>${icon}</span><span>${escapeHtml(message)}</span>`;
+        container.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(10px)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 3200);
+    }
+
+    // Fetch tickets and stats from backend
+    async function loadTickets(isManual = false) {
+        const refreshIcon = document.getElementById('refreshIcon');
+        if (isManual && refreshIcon) {
+            refreshIcon.style.display = 'inline-block';
+            refreshIcon.style.animation = 'spin 0.6s linear';
+            setTimeout(() => { refreshIcon.style.animation = ''; }, 600);
+        }
+
+        try {
+            const url = `/tickets${searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : ''}`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            
+            const data = await res.json();
+            allTickets = data.tickets || [];
+
+            // Update stats
+            const total = data.total ?? allTickets.length;
+            const openCount = data.open_count ?? allTickets.filter(t => t.status === 'open').length;
+            const resolvedCount = data.resolved_count ?? allTickets.filter(t => t.status === 'resolved').length;
+            const rate = data.stats?.resolution_rate ?? (total > 0 ? Math.round((resolvedCount / total) * 100) : 0);
+
+            document.getElementById('kpiTotal').innerText = total;
+            document.getElementById('kpiOpen').innerText = openCount;
+            document.getElementById('kpiResolved').innerText = resolvedCount;
+            document.getElementById('kpiRate').innerText = `${rate}%`;
+
+            document.getElementById('countOpenTab').innerText = openCount;
+            document.getElementById('countAllTab').innerText = total;
+            document.getElementById('countResolvedTab').innerText = resolvedCount;
+
+            renderQueue();
+            if (isManual) showToast(`Queue synced (${openCount} open incidents)`, 'info');
+        } catch (err) {
+            console.error('Failed to load tickets:', err);
+        }
+    }
+
+    // Render list based on current filter & search
+    function renderQueue() {
+        const queueElem = document.getElementById('incidentQueue');
+        
+        // Filter tickets
+        let filtered = allTickets;
+        if (currentFilter === 'open') {
+            filtered = filtered.filter(t => (t.status || '').toLowerCase() === 'open');
+        } else if (currentFilter === 'resolved') {
+            filtered = filtered.filter(t => (t.status || '').toLowerCase() === 'resolved');
+        }
+
+        if (searchQuery.trim()) {
+            const q = searchQuery.toLowerCase().trim();
+            filtered = filtered.filter(t => 
+                String(t.id).includes(q) ||
+                (t.employee_question || '').toLowerCase().includes(q) ||
+                (t.resolution_notes || '').toLowerCase().includes(q)
+            );
+        }
+
+        if (filtered.length === 0) {
+            if (currentFilter === 'open' && !searchQuery) {
+                queueElem.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🎉</div>
+                        <div class="empty-title">Queue is Completely Clear!</div>
+                        <div class="empty-desc">All escalated IT issues have been resolved. Outstanding work!</div>
+                    </div>
+                `;
+            } else if (searchQuery) {
+                queueElem.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🔍</div>
+                        <div class="empty-title">No Matching Incidents Found</div>
+                        <div class="empty-desc">No tickets matched "${escapeHtml(searchQuery)}". Try clearing your search query.</div>
+                    </div>
+                `;
+            } else {
+                queueElem.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📂</div>
+                        <div class="empty-title">No Incidents in this View</div>
+                        <div class="empty-desc">There are no tickets matching the "${escapeHtml(currentFilter)}" filter.</div>
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        queueElem.innerHTML = filtered.map(t => {
+            const isOpen = (t.status || '').toLowerCase() === 'open';
+            const isHazard = isCriticalHazard(t.employee_question);
+
+            return `
+                <article class="ticket-card ${isOpen ? '' : 'resolved'}" id="ticket-card-${t.id}">
+                    <div class="ticket-header">
+                        <div class="ticket-badges">
+                            <span class="id-badge">#${t.id}</span>
+                            <span class="status-badge ${isOpen ? 'open' : 'resolved'}">
+                                ${isOpen ? '● OPEN INCIDENT' : '✓ RESOLVED'}
+                            </span>
+                            ${isHazard ? '<span class="urgency-badge critical">🚨 URGENT / HAZARD</span>' : '<span class="urgency-badge">🟡 ESCALATION</span>'}
+                        </div>
+                        <div class="ticket-time">
+                            Created ${formatTime(t.created_at)}
+                        </div>
+                    </div>
+
+                    <div class="ticket-body">
+                        <div class="ticket-issue">
+                            "${escapeHtml(t.employee_question)}"
+                        </div>
+
+                        ${!isOpen ? `
+                            <div class="ticket-resolution-box">
+                                 <div class="ticket-resolution-title">
+                                     <span>✅</span>
+                                     <span>Resolution Logged • ${formatTime(t.resolved_at)}</span>
+                                 </div>
+                                 <div class="ticket-resolution-text">
+                                     ${escapeHtml(t.resolution_notes || 'Resolved and verified by IT engineer.')}
+                                 </div>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="ticket-footer">
+                        <div class="ticket-decision-hint">
+                            ⚡ AI Triage: Escalated to Engineer Drawer
+                        </div>
+
+                        <div class="ticket-actions">
+                            ${isOpen ? `
+                                <button class="btn-quick-resolve" onclick="quickResolve(${t.id})">
+                                    ⚡ Quick Resolve
+                                </button>
+                                <button class="btn-resolve" onclick="openResolveModal(${t.id})">
+                                    ✅ Mark Resolved...
+                                </button>
+                            ` : `
+                                <button class="btn-reopen" onclick="reopenTicket(${t.id})">
+                                    ↩️ Reopen Incident
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                </article>
+            `;
+        }).join('');
+    }
+
+    // Modal Handling
+    function openResolveModal(ticketId) {
+        currentResolvingId = ticketId;
+        const ticket = allTickets.find(t => t.id === ticketId);
+        
+        document.getElementById('modalTitle').innerText = `Resolve Incident #${ticketId}`;
+        document.getElementById('modalIssuePreview').innerText = ticket ? `"${ticket.employee_question}"` : '';
+        document.getElementById('engineerNotes').value = '';
+        document.getElementById('resolutionModal').style.display = 'flex';
+        document.getElementById('engineerNotes').focus();
+    }
+
+    function closeModal() {
+        document.getElementById('resolutionModal').style.display = 'none';
+        currentResolvingId = null;
+    }
+
+    function insertPreset(text) {
+        const textarea = document.getElementById('engineerNotes');
+        if (textarea.value.trim()) {
+            textarea.value = textarea.value.trim() + '; ' + text;
+        } else {
+            textarea.value = text;
+        }
+        textarea.focus();
+    }
+
+    async function confirmResolution() {
+        if (!currentResolvingId) return;
+        const notes = document.getElementById('engineerNotes').value.trim() || 'Resolved and verified by engineer.';
+        const id = currentResolvingId;
+        closeModal();
+
+        try {
+            const res = await fetch(`/tickets/${id}/resolve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: notes })
+            });
+
+            if (!res.ok) throw new Error('Failed to resolve');
+            showToast(`Incident #${id} marked as resolved!`, 'success');
+            await loadTickets();
+        } catch (err) {
+            console.error('Resolve error:', err);
+            showToast(`Failed to resolve #${id}`, 'error');
+        }
+    }
+
+    async function quickResolve(id) {
+        try {
+            const res = await fetch(`/tickets/${id}/resolve`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ notes: 'Quick resolved: Issue addressed and closed by engineer.' })
+            });
+
+            if (!res.ok) throw new Error('Failed quick resolve');
+            showToast(`Incident #${id} resolved!`, 'success');
+            await loadTickets();
+        } catch (err) {
+            console.error('Quick resolve error:', err);
+            showToast(`Error resolving #${id}`, 'error');
+        }
+    }
+
+    async function reopenTicket(id) {
+        try {
+            const res = await fetch(`/tickets/${id}/reopen`, {
+                method: 'POST'
+            });
+
+            if (!res.ok) throw new Error('Failed reopen');
+            showToast(`Incident #${id} reopened and back in queue`, 'reopen');
+            await loadTickets();
+        } catch (err) {
+            console.error('Reopen error:', err);
+            showToast(`Error reopening #${id}`, 'error');
+        }
+    }
+
+    // Filter controls
+    function setStatusFilter(status, elem) {
+        currentFilter = status;
+        document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+        if (elem) elem.classList.add('active');
+        renderQueue();
+    }
+
+    function onSearchInput() {
+        const val = document.getElementById('searchInput').value;
+        searchQuery = val;
+        document.getElementById('searchClear').style.display = val ? 'block' : 'none';
+        renderQueue();
+    }
+
+    function clearSearch() {
+        document.getElementById('searchInput').value = '';
+        searchQuery = '';
+        document.getElementById('searchClear').style.display = 'none';
+        renderQueue();
+    }
+
+    function manualRefresh() {
+        loadTickets(true);
+    }
+
+    function toggleAutoSync() {
+        autoSyncActive = !autoSyncActive;
+        const pill = document.getElementById('syncPill');
+        const text = document.getElementById('syncText');
+
+        if (autoSyncActive) {
+            pill.classList.remove('off');
+            text.innerText = 'Auto-Sync 5s';
+            startAutoSync();
+            showToast('Auto-sync enabled (5s polling)', 'info');
+        } else {
+            pill.classList.add('off');
+            text.innerText = 'Auto-Sync OFF';
+            if (syncIntervalId) clearInterval(syncIntervalId);
+            showToast('Auto-sync paused', 'info');
+        }
+    }
+
+    function startAutoSync() {
+        if (syncIntervalId) clearInterval(syncIntervalId);
+        syncIntervalId = setInterval(() => {
+            if (autoSyncActive && document.getElementById('resolutionModal').style.display !== 'flex') {
+                loadTickets();
+            }
+        }, 5000);
+    }
+
+    // Keyboard support
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('resolutionModal').style.display === 'flex') {
+            closeModal();
+        }
+    });
+
+    // Initial load
+    loadTickets();
+    startAutoSync();
+</script>
+
+<style>
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
+
+</body>
+</html>

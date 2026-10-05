@@ -9,4 +9,4 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["sh", "-c", "gunicorn --bind 0.0.0.0:${PORT:-5000} it_support_agent:app"]
+CMD ["sh", "-c", "uvicorn it_support_agent:app --host 0.0.0.0 --port ${PORT:-5000}"]

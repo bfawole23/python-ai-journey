@@ -9,19 +9,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #f59e0b;
-            --primary-glow: rgba(245, 158, 11, 0.45);
-            --accent: #993300;
-            --accent-glow: rgba(153, 51, 0, 0.45);
-            --cyan: #f59e0b;
-            --emerald: #10b981;
-            --rose: #993300;
-            --amber: #f59e0b;
-            --bg-dark: #000000;
-            --card-surface: rgba(14, 10, 8, 0.94);
-            --card-border: rgba(245, 158, 11, 0.22);
-            --text-main: #f8fafc;
-            --text-muted: #a3a3a3;
+            --primary: #d97706;
+            --primary-glow: rgba(217, 119, 6, 0.25);
+            --accent: #b45309;
+            --accent-glow: rgba(180, 83, 9, 0.25);
+            --cyan: #0284c7;
+            --emerald: #059669;
+            --rose: #dc2626;
+            --amber: #d97706;
+            --bg-body: #f8fafc;
+            --card-surface: #ffffff;
+            --card-border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-subtle: #94a3b8;
         }
 
         * {
@@ -32,11 +33,11 @@
         }
 
         body {
-            background-color: #000000;
+            background-color: #f8fafc;
             background-image: 
-                radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.25) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(153, 51, 0, 0.35) 0px, transparent 50%),
-                radial-gradient(at 50% 100%, rgba(245, 158, 11, 0.12) 0px, transparent 50%);
+                radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.09) 0px, transparent 45%),
+                radial-gradient(at 100% 0%, rgba(217, 119, 6, 0.07) 0px, transparent 45%),
+                radial-gradient(at 50% 100%, rgba(245, 158, 11, 0.04) 0px, transparent 45%);
             background-attachment: fixed;
             min-height: 100vh;
             display: flex;
@@ -49,28 +50,28 @@
         .container {
             width: 100%;
             max-width: 860px;
-            background: var(--card-surface);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--card-border);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 28px;
-            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.95), 0 0 30px rgba(153, 51, 0, 0.25);
+            box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.04);
             overflow: hidden;
-            animation: floatUp 0.4s ease-out;
+            animation: floatUp 0.35s ease-out;
         }
 
         @keyframes floatUp {
-            from { opacity: 0; transform: translateY(16px); }
+            from { opacity: 0; transform: translateY(14px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         .portal-header {
-            padding: 30px 36px 24px;
-            border-bottom: 1px solid rgba(245, 158, 11, 0.15);
+            padding: 26px 36px 20px;
+            border-bottom: 1px solid #e2e8f0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: linear-gradient(180deg, rgba(245, 158, 11, 0.05) 0%, transparent 100%);
+            background: #ffffff;
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         .header-brand {
@@ -82,22 +83,20 @@
         .brand-avatar {
             width: 50px;
             height: 50px;
-            background: linear-gradient(135deg, #f59e0b, #993300);
+            background: linear-gradient(135deg, #f59e0b, #d97706);
             border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 26px;
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.45);
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
         }
 
         .brand-text h1 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             font-weight: 700;
-            background: linear-gradient(90deg, #ffffff 40%, #f59e0b 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: #0f172a;
             letter-spacing: -0.02em;
         }
 
@@ -111,9 +110,9 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            background: rgba(245, 158, 11, 0.12);
-            border: 1px solid rgba(245, 158, 11, 0.35);
-            color: #f59e0b;
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #b45309;
             padding: 6px 14px;
             border-radius: 9999px;
             font-size: 0.75rem;
@@ -127,7 +126,7 @@
             height: 8px;
             background: #f59e0b;
             border-radius: 50%;
-            box-shadow: 0 0 10px #f59e0b;
+            box-shadow: 0 0 8px #f59e0b;
             animation: pulseGlow 1.8s infinite;
         }
 
@@ -137,40 +136,69 @@
             100% { transform: scale(0.9); opacity: 0.8; }
         }
 
+        .nav-tech-btn {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #b45309;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tech-btn:hover {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+            transform: translateY(-1px);
+        }
+
         .mode-switcher {
             display: flex;
             gap: 8px;
             padding: 18px 36px 0;
+            background: #ffffff;
         }
 
         .mode-tab {
-            padding: 10px 18px;
+            padding: 9px 18px;
             border-radius: 12px;
             font-size: 0.85rem;
             font-weight: 700;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
             color: var(--text-muted);
             cursor: pointer;
             transition: all 0.2s ease;
         }
 
+        .mode-tab:hover {
+            color: #0f172a;
+            background: #f1f5f9;
+        }
+
         .mode-tab.active {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(153, 51, 0, 0.4));
+            background: #fffbeb;
             border-color: #f59e0b;
-            color: #ffffff;
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.25);
+            color: #b45309;
+            box-shadow: 0 1px 4px rgba(245, 158, 11, 0.15);
         }
 
         .portal-content {
             padding: 24px 36px 32px;
+            background: #ffffff;
         }
 
         .step-label {
             font-family: 'Space Grotesk', sans-serif;
             font-size: 0.82rem;
             font-weight: 700;
-            color: #f59e0b;
+            color: #b45309;
             text-transform: uppercase;
             letter-spacing: 0.08em;
             margin-bottom: 12px;
@@ -187,8 +215,8 @@
         }
 
         .domain-card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 16px;
             padding: 14px 12px;
             display: flex;
@@ -197,24 +225,25 @@
             text-align: center;
             gap: 8px;
             cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .domain-card:hover {
-            background: rgba(245, 158, 11, 0.08);
-            border-color: rgba(245, 158, 11, 0.3);
+            background: #fffbeb;
+            border-color: #fde68a;
             transform: translateY(-2px);
         }
 
         .domain-card.active {
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(153, 51, 0, 0.35));
+            background: #fffbeb;
             border-color: #f59e0b;
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.35);
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.2);
             transform: translateY(-2px);
         }
 
         .domain-icon { font-size: 26px; }
-        .domain-title { font-size: 0.82rem; font-weight: 700; color: #ffffff; }
+        .domain-title { font-size: 0.82rem; font-weight: 700; color: #1e293b; }
 
         .symptoms-container {
             display: flex;
@@ -224,14 +253,15 @@
         }
 
         .symptom-chip {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 14px;
             padding: 10px 16px;
             font-size: 0.85rem;
             font-weight: 600;
-            color: #e2e8f0;
+            color: #1e293b;
             cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
@@ -239,16 +269,16 @@
         }
 
         .symptom-chip:hover {
-            background: rgba(245, 158, 11, 0.1);
-            border-color: rgba(245, 158, 11, 0.3);
+            background: #fffbeb;
+            border-color: #fde68a;
             transform: translateY(-1px);
         }
 
         .symptom-chip.active {
-            background: linear-gradient(135deg, #f59e0b, #993300);
+            background: linear-gradient(135deg, #f59e0b, #d97706);
             border-color: transparent;
             color: #ffffff;
-            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.45);
+            box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
         }
 
         .symptom-chip .badge {
@@ -259,8 +289,11 @@
             text-transform: uppercase;
         }
 
-        .badge-fix { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-        .badge-esc { background: rgba(153, 51, 0, 0.35); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-fix { background: #ecfdf5; color: #059669; }
+        .badge-esc { background: #fff7ed; color: #c2410c; border: 1px solid #fed7aa; }
+
+        .symptom-chip.active .badge-fix { background: rgba(255,255,255,0.25); color: #ffffff; }
+        .symptom-chip.active .badge-esc { background: rgba(255,255,255,0.25); color: #ffffff; border-color: transparent; }
 
         .urgency-row {
             display: grid;
@@ -270,8 +303,8 @@
         }
 
         .urgency-btn {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 12px;
             padding: 10px 12px;
             font-size: 0.8rem;
@@ -285,29 +318,33 @@
             gap: 8px;
         }
 
+        .urgency-btn:hover {
+            background: #f8fafc;
+        }
+
         .urgency-btn.active[data-level="normal"] {
-            background: rgba(16, 185, 129, 0.15);
+            background: #ecfdf5;
             border-color: #10b981;
-            color: #34d399;
+            color: #065f46;
         }
 
         .urgency-btn.active[data-level="medium"] {
-            background: rgba(245, 158, 11, 0.18);
+            background: #fffbeb;
             border-color: #f59e0b;
-            color: #fbbf24;
+            color: #92400e;
         }
 
         .urgency-btn.active[data-level="urgent"] {
-            background: rgba(153, 51, 0, 0.35);
-            border-color: #f59e0b;
-            color: #f59e0b;
-            box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
+            background: #fff7ed;
+            border-color: #ea580c;
+            color: #9a3412;
+            box-shadow: 0 0 10px rgba(234, 88, 12, 0.2);
         }
 
         .btn-launch {
             width: 100%;
             padding: 16px;
-            background: linear-gradient(135deg, #f59e0b 0%, #993300 50%, #f59e0b 100%);
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
             background-size: 200% auto;
             color: white;
             border: none;
@@ -317,7 +354,7 @@
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.5);
+            box-shadow: 0 8px 20px -4px rgba(217, 119, 6, 0.4);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -327,7 +364,7 @@
         .btn-launch:hover:not(:disabled) {
             background-position: right center;
             transform: translateY(-2px);
-            box-shadow: 0 15px 35px -5px rgba(153, 51, 0, 0.6);
+            box-shadow: 0 12px 28px -4px rgba(180, 83, 9, 0.5);
         }
 
         .btn-launch:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -338,10 +375,10 @@
             width: 100%;
             height: 120px;
             padding: 16px;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
             border-radius: 16px;
-            color: white;
+            color: #0f172a;
             font-size: 0.95rem;
             line-height: 1.6;
             outline: none;
@@ -351,8 +388,9 @@
         }
 
         textarea:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25);
+            background: #ffffff;
+            border-color: #d97706;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
         }
 
         #diagnostic-display {
@@ -369,17 +407,17 @@
         .resolution-card {
             border-radius: 20px;
             padding: 26px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
         }
 
         .resolution-card.fix {
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(245, 158, 11, 0.1) 100%);
-            border: 1px solid rgba(16, 185, 129, 0.4);
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
         }
 
         .resolution-card.escalate {
-            background: linear-gradient(135deg, rgba(153, 51, 0, 0.35) 0%, rgba(0, 0, 0, 0.7) 100%);
-            border: 1px solid rgba(245, 158, 11, 0.4);
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
         }
 
         .res-badge {
@@ -396,14 +434,14 @@
             margin-bottom: 12px;
         }
 
-        .resolution-card.fix .res-badge { background: #10b981; color: #064e3b; }
-        .resolution-card.escalate .res-badge { background: #993300; color: #ffffff; border: 1px solid #f59e0b; }
+        .resolution-card.fix .res-badge { background: #10b981; color: #ffffff; }
+        .resolution-card.escalate .res-badge { background: #ea580c; color: #ffffff; }
 
         .res-title {
             font-family: 'Space Grotesk', sans-serif;
             font-size: 1.25rem;
             font-weight: 700;
-            color: #ffffff;
+            color: #0f172a;
             margin-bottom: 12px;
         }
 
@@ -411,34 +449,35 @@
             display: flex;
             align-items: flex-start;
             gap: 12px;
-            background: rgba(255, 255, 255, 0.05);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             padding: 12px 14px;
             border-radius: 10px;
             margin-bottom: 8px;
             font-size: 0.92rem;
             line-height: 1.5;
-            color: #e2e8f0;
+            color: #1e293b;
             cursor: pointer;
             transition: all 0.2s;
         }
 
-        .checklist-item:hover { background: rgba(245, 158, 11, 0.08); }
+        .checklist-item:hover { background: #f8fafc; }
 
         .checklist-item.checked {
             text-decoration: line-through;
             opacity: 0.6;
-            background: rgba(16, 185, 129, 0.1);
+            background: #f1f5f9;
         }
 
         .checklist-item input {
             margin-top: 4px;
-            accent-color: var(--emerald);
+            accent-color: #059669;
             cursor: pointer;
         }
 
         .ticket-boarding-pass {
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px dashed rgba(245, 158, 11, 0.5);
+            background: #ffffff;
+            border: 1px dashed #f97316;
             border-radius: 14px;
             padding: 16px;
             margin-top: 14px;
@@ -451,22 +490,22 @@
             font-family: 'Space Grotesk', sans-serif;
             font-size: 1.2rem;
             font-weight: 800;
-            color: #f59e0b;
+            color: #c2410c;
         }
 
         .reason-callout {
             margin-top: 14px;
             padding-top: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
             font-size: 0.84rem;
             color: var(--text-muted);
             font-style: italic;
         }
 
         .portal-footer {
-            border-top: 1px solid rgba(245, 158, 11, 0.15);
+            border-top: 1px solid #e2e8f0;
             padding: 18px 36px;
-            background: rgba(0, 0, 0, 0.4);
+            background: #f8fafc;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -475,7 +514,7 @@
         }
 
         .toggle-feed {
-            color: #f59e0b;
+            color: #d97706;
             font-weight: 700;
             cursor: pointer;
         }
@@ -483,19 +522,20 @@
         #tickets-feed {
             display: none;
             padding: 16px 36px 24px;
-            background: rgba(0, 0, 0, 0.5);
-            border-top: 1px solid rgba(245, 158, 11, 0.15);
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
             max-height: 200px;
             overflow-y: auto;
         }
 
         .db-ticket-row {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(245, 158, 11, 0.15);
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
             border-radius: 10px;
             padding: 10px 14px;
             margin-bottom: 8px;
             font-size: 0.85rem;
+            color: #1e293b;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -513,9 +553,12 @@
                 <p>One-Click Automated Triage & RAG Self-Service Engine</p>
             </div>
         </div>
-        <div class="pulse-pill">
-            <span class="pulse-dot"></span>
-            <span>Active Agent</span>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <a href="/engineer" class="nav-tech-btn">🛠️ Engineer View →</a>
+            <div class="pulse-pill">
+                <span class="pulse-dot"></span>
+                <span>Active Agent</span>
+            </div>
         </div>
     </header>
 
@@ -581,7 +624,7 @@
     </main>
 
     <div id="tickets-feed">
-        <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; margin-bottom:10px; font-size:0.9rem; color:#ffffff;">
+        <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; margin-bottom:10px; font-size:0.9rem; color:#0f172a;">
             Live Persistent Database Feed (SQLite):
         </div>
         <div id="ticketsRows">Loading tickets...</div>
@@ -589,9 +632,12 @@
 
     <footer class="portal-footer">
         <span>Powered by Gemini + Vector RAG + SQLite</span>
-        <span class="toggle-feed" onclick="toggleTicketsFeed()">
-            📋 View Escalated Tickets (<span id="ticketCountBadge">0</span>) ▾
-        </span>
+        <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <a href="/engineer" style="color: #d97706; text-decoration: none; font-weight: 700; font-size: 0.82rem;">🛠️ Engineer Dashboard →</a>
+            <span class="toggle-feed" onclick="toggleTicketsFeed()">
+                📋 View Escalated Tickets (<span id="ticketCountBadge">0</span>) ▾
+            </span>
+        </div>
     </footer>
 </div>
 
@@ -726,7 +772,7 @@
         btn.disabled = true;
         btnText.innerHTML = `⚡ Analyzing with AI Agent...`;
         display.style.display = 'block';
-        display.innerHTML = `<div style="text-align:center; padding:20px; color:#f59e0b; font-weight:700;">⚡ Analyzing symptoms with AI...</div>`;
+        display.innerHTML = `<div style="text-align:center; padding:20px; color:#b45309; font-weight:700;">⚡ Analyzing symptoms with AI...</div>`;
 
         try {
             const res = await fetch('/ask', {
@@ -746,7 +792,7 @@
                     <div class="resolution-card escalate">
                         <div class="res-badge">Notice</div>
                         <div class="res-title">Request Not Processed</div>
-                        <p style="color:#e2e8f0;">${escapeHtml(data.error || 'Server error occurred')}</p>
+                        <p style="color:#334155;">${escapeHtml(data.error || 'Server error occurred')}</p>
                     </div>
                 `;
                 return;
@@ -798,10 +844,23 @@
                     <div class="resolution-card fix">
                         <div class="res-badge">🟢 Instant Resolution Found</div>
                         <div class="res-title">Self-Service Action Plan</div>
-                        <p style="font-size:0.88rem; color:#94a3b8; margin-bottom:14px;">Resolution plan for: <span style="color:#f59e0b; font-weight:700;">"${escapeHtml(questionText)}"</span></p>
+                        <p style="font-size:0.88rem; color:#475569; margin-bottom:14px;">Resolution plan for: <span style="color:#b45309; font-weight:700;">"${escapeHtml(questionText)}"</span></p>
                         ${checklistHtml || `<div class="checklist-item"><span>${escapeHtml(data.result)}</span></div>`}
                         <div class="reason-callout">
                             💡 <strong>Why Self-Service:</strong> ${escapeHtml(data.decision.reason)}
+                        </div>
+
+                        <div class="escalate-trigger-box" style="margin-top:22px; padding:16px 20px; background:#fff7ed; border:1px solid #fed7aa; border-radius:14px;">
+                            <div style="font-size:0.92rem; font-weight:700; color:#9a3412; margin-bottom:4px;">Did this fix resolve your problem?</div>
+                            <p style="font-size:0.83rem; color:#7c2d12; margin-bottom:12px;">If you completed the steps above and your device or software is still not working, click below to immediately dispatch this to an IT engineer.</p>
+                            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                                <button type="button" class="btn-resolved" onclick="markFixResolved(this)" style="padding:9px 18px; border-radius:10px; border:1px solid #10b981; background:#ffffff; color:#047857; font-weight:700; font-size:0.85rem; cursor:pointer; transition:all 0.2s;">
+                                    ✅ Yes, Problem Solved!
+                                </button>
+                                <button type="button" id="btn-escalate-now" class="btn-escalate-selffix" onclick="escalateFailedSelfFix('${escapeHtml(questionText).replace(/'/g, "\\'")}')" style="padding:9px 18px; border-radius:10px; border:1px solid #dc2626; background:#dc2626; color:#ffffff; font-weight:700; font-size:0.85rem; cursor:pointer; box-shadow:0 2px 8px rgba(220,38,38,0.25); transition:all 0.2s;">
+                                    🚨 Self-Fix Didn't Work — Escalate to Engineer
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -809,9 +868,9 @@
                 const ticketNum = data.ticket_id ? `#${data.ticket_id}` : 'QUEUED';
                 display.innerHTML = `
                     <div class="resolution-card escalate">
-                        <div class="res-badge">🚨 Escalated to IT Technician</div>
+                        <div class="res-badge">🚨 Escalated to IT Engineer</div>
                         <div class="res-title">High Priority Ticket Logged</div>
-                        <p style="color:#e2e8f0; font-size:0.95rem; line-height:1.6;">${escapeHtml(data.result)}</p>
+                        <p style="color:#334155; font-size:0.95rem; line-height:1.6;">${escapeHtml(data.result)}</p>
                         
                         <div class="ticket-boarding-pass">
                             <div>
@@ -834,7 +893,7 @@
                 <div class="resolution-card escalate">
                     <div class="res-badge">Notice</div>
                     <div class="res-title">Server Connection Failed</div>
-                    <p style="color:#e2e8f0;">Ensure the backend python server is running.</p>
+                    <p style="color:#334155;">Ensure the backend python server is running.</p>
                 </div>
             `;
         } finally {
@@ -860,12 +919,12 @@
                 document.getElementById('ticketCountBadge').innerText = data.tickets.length;
                 const rows = document.getElementById('ticketsRows');
                 if (data.tickets.length === 0) {
-                    rows.innerHTML = `<span style="color:#94a3b8;">No escalated tickets in SQLite database yet.</span>`;
+                    rows.innerHTML = `<span style="color:#64748b;">No escalated tickets in SQLite database yet.</span>`;
                 } else {
                     rows.innerHTML = data.tickets.slice(0, 5).map(t => `
                         <div class="db-ticket-row">
                             <span><strong>#${t.id}</strong>: ${escapeHtml(t.employee_question)}</span>
-                            <span style="color:#f59e0b; font-weight:800; font-size:0.75rem;">${t.status.toUpperCase()}</span>
+                            <span style="color:#d97706; font-weight:800; font-size:0.75rem;">${t.status.toUpperCase()}</span>
                         </div>
                     `).join('');
                 }
@@ -884,6 +943,70 @@
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    function markFixResolved(btn) {
+        const box = btn.closest('.escalate-trigger-box');
+        if (box) {
+            box.style.background = '#f0fdf4';
+            box.style.borderColor = '#bbf7d0';
+            box.innerHTML = `
+                <div style="display:flex; align-items:center; gap:10px; color:#15803d; font-weight:700; font-size:0.95rem;">
+                    <span style="font-size:1.4rem;">🎉</span>
+                    <span>Awesome! Glad the self-service steps resolved your issue. No further action needed.</span>
+                </div>
+            `;
+        }
+    }
+
+    async function escalateFailedSelfFix(originalQuestion) {
+        const btn = document.getElementById('btn-escalate-now');
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = `⏳ Dispatching to Engineer...`;
+        }
+
+        try {
+            const res = await fetch('/escalate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question: originalQuestion,
+                    reason: "Self-service troubleshooting was attempted but did not resolve the issue. Escalated to IT engineer."
+                })
+            });
+            const data = await res.json();
+            const ticketNum = data.ticket_id ? `#${data.ticket_id}` : 'QUEUED';
+            const display = document.getElementById('resolutionDisplay');
+            display.innerHTML = `
+                <div class="resolution-card escalate">
+                    <div class="res-badge">🚨 Escalated to IT Engineer</div>
+                    <div class="res-title">Self-Fix Unsuccessful • Ticket Dispatched</div>
+                    <p style="color:#334155; font-size:0.95rem; line-height:1.6;">${escapeHtml(data.result || "This issue has been logged and escalated to an IT engineer.")}</p>
+                    
+                    <div class="ticket-boarding-pass">
+                        <div>
+                            <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Database Record</div>
+                            <div class="ticket-num">Ticket ${ticketNum} • Status: OPEN • PRIORITY 1</div>
+                        </div>
+                        <div style="font-size:1.8rem;">🎫</div>
+                    </div>
+
+                    <div class="reason-callout">
+                        🚨 <strong>Escalation Reason:</strong> ${escapeHtml(data.decision ? data.decision.reason : "Self-service troubleshooting attempted but issue persists.")}
+                    </div>
+                </div>
+            `;
+            fetchTickets();
+        } catch(err) {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = `🚨 Self-Fix Didn't Work — Escalate to Engineer`;
+                alert("Could not escalate. Please verify backend server is running.");
+            }
+        }
+    }
+
+    window.markFixResolved = markFixResolved;
+    window.escalateFailedSelfFix = escalateFailedSelfFix;
     window.switchMode = switchMode;
     window.pickDomain = pickDomain;
     window.pickUrgency = pickUrgency;
