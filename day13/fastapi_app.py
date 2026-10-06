@@ -758,6 +758,9 @@ def me_endpoint(request: Request):
 @app.get("/portal", response_class=HTMLResponse)
 @app.get("/support", response_class=HTMLResponse)
 def portal(request: Request):
+    user = get_current_user_from_request(request)
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
     return templates.TemplateResponse(request, "portal.html")
 
 
