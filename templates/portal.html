@@ -158,6 +158,59 @@
             transform: translateY(-1px);
         }
 
+        .nav-auth-btn {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #b45309;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-auth-btn:hover {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+            transform: translateY(-1px);
+        }
+
+        .nav-user-pill {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-logout-btn {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-logout-btn:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+
         .mode-switcher {
             display: flex;
             gap: 8px;
@@ -553,7 +606,17 @@
                 <p>One-Click Automated Triage & RAG Self-Service Engine</p>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div id="authStatusArea" style="display: flex; align-items: center; gap: 8px;">
+                <a href="/login" class="nav-auth-btn" id="navLoginBtn">🔑 Employee Sign In</a>
+                <div id="navUserBadge" style="display: none; align-items: center; gap: 6px;">
+                    <span class="nav-user-pill">
+                        <span>👤</span>
+                        <span id="navUsernameText">Employee</span>
+                    </span>
+                    <button class="nav-logout-btn" onclick="logoutEmployee()" title="Log out">Log Out</button>
+                </div>
+            </div>
             <a href="/engineer" class="nav-tech-btn">🛠️ Engineer View →</a>
             <div class="pulse-pill">
                 <span class="pulse-dot"></span>
@@ -849,19 +912,6 @@
                         <div class="reason-callout">
                             💡 <strong>Why Self-Service:</strong> ${escapeHtml(data.decision.reason)}
                         </div>
-
-                        <div class="escalate-trigger-box" style="margin-top:22px; padding:16px 20px; background:#fff7ed; border:1px solid #fed7aa; border-radius:14px;">
-                            <div style="font-size:0.92rem; font-weight:700; color:#9a3412; margin-bottom:4px;">Did this fix resolve your problem?</div>
-                            <p style="font-size:0.83rem; color:#7c2d12; margin-bottom:12px;">If you completed the steps above and your device or software is still not working, click below to immediately dispatch this to an IT engineer.</p>
-                            <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-                                <button type="button" class="btn-resolved" onclick="markFixResolved(this)" style="padding:9px 18px; border-radius:10px; border:1px solid #10b981; background:#ffffff; color:#047857; font-weight:700; font-size:0.85rem; cursor:pointer; transition:all 0.2s;">
-                                    ✅ Yes, Problem Solved!
-                                </button>
-                                <button type="button" id="btn-escalate-now" class="btn-escalate-selffix" onclick="escalateFailedSelfFix('${escapeHtml(questionText).replace(/'/g, "\\'")}')" style="padding:9px 18px; border-radius:10px; border:1px solid #dc2626; background:#dc2626; color:#ffffff; font-weight:700; font-size:0.85rem; cursor:pointer; box-shadow:0 2px 8px rgba(220,38,38,0.25); transition:all 0.2s;">
-                                    🚨 Self-Fix Didn't Work — Escalate to Engineer
-                                </button>
-                            </div>
-                        </div>
                     </div>
                 `;
             } else {
@@ -911,6 +961,32 @@
         }
     }
 
+    async function checkAuthStatus() {
+        try {
+            const res = await fetch('/api/me');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.authenticated && data.user) {
+                    document.getElementById('navLoginBtn').style.display = 'none';
+                    document.getElementById('navUserBadge').style.display = 'inline-flex';
+                    document.getElementById('navUsernameText').innerText = '@' + data.user.username;
+                } else {
+                    document.getElementById('navLoginBtn').style.display = 'inline-flex';
+                    document.getElementById('navUserBadge').style.display = 'none';
+                }
+            }
+        } catch (e) {
+            console.warn('Auth status check error:', e);
+        }
+    }
+
+    async function logoutEmployee() {
+        try {
+            await fetch('/api/logout', { method: 'POST' });
+        } catch (e) {}
+        window.location.href = '/login';
+    }
+
     async function fetchTickets() {
         try {
             const res = await fetch('/tickets');
@@ -923,7 +999,10 @@
                 } else {
                     rows.innerHTML = data.tickets.slice(0, 5).map(t => `
                         <div class="db-ticket-row">
-                            <span><strong>#${t.id}</strong>: ${escapeHtml(t.employee_question)}</span>
+                            <span>
+                                <strong>#${t.id}</strong>${t.employee_username ? ` <em style="color:#64748b; font-size:0.75rem;">(@${escapeHtml(t.employee_username)})</em>` : ''}: 
+                                ${escapeHtml(t.employee_question)}
+                            </span>
                             <span style="color:#d97706; font-weight:800; font-size:0.75rem;">${t.status.toUpperCase()}</span>
                         </div>
                     `).join('');
@@ -943,75 +1022,12 @@
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    function markFixResolved(btn) {
-        const box = btn.closest('.escalate-trigger-box');
-        if (box) {
-            box.style.background = '#f0fdf4';
-            box.style.borderColor = '#bbf7d0';
-            box.innerHTML = `
-                <div style="display:flex; align-items:center; gap:10px; color:#15803d; font-weight:700; font-size:0.95rem;">
-                    <span style="font-size:1.4rem;">🎉</span>
-                    <span>Awesome! Glad the self-service steps resolved your issue. No further action needed.</span>
-                </div>
-            `;
-        }
-    }
-
-    async function escalateFailedSelfFix(originalQuestion) {
-        const btn = document.getElementById('btn-escalate-now');
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = `⏳ Dispatching to Engineer...`;
-        }
-
-        try {
-            const res = await fetch('/escalate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    question: originalQuestion,
-                    reason: "Self-service troubleshooting was attempted but did not resolve the issue. Escalated to IT engineer."
-                })
-            });
-            const data = await res.json();
-            const ticketNum = data.ticket_id ? `#${data.ticket_id}` : 'QUEUED';
-            const display = document.getElementById('resolutionDisplay');
-            display.innerHTML = `
-                <div class="resolution-card escalate">
-                    <div class="res-badge">🚨 Escalated to IT Engineer</div>
-                    <div class="res-title">Self-Fix Unsuccessful • Ticket Dispatched</div>
-                    <p style="color:#334155; font-size:0.95rem; line-height:1.6;">${escapeHtml(data.result || "This issue has been logged and escalated to an IT engineer.")}</p>
-                    
-                    <div class="ticket-boarding-pass">
-                        <div>
-                            <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Database Record</div>
-                            <div class="ticket-num">Ticket ${ticketNum} • Status: OPEN • PRIORITY 1</div>
-                        </div>
-                        <div style="font-size:1.8rem;">🎫</div>
-                    </div>
-
-                    <div class="reason-callout">
-                        🚨 <strong>Escalation Reason:</strong> ${escapeHtml(data.decision ? data.decision.reason : "Self-service troubleshooting attempted but issue persists.")}
-                    </div>
-                </div>
-            `;
-            fetchTickets();
-        } catch(err) {
-            if (btn) {
-                btn.disabled = false;
-                btn.innerHTML = `🚨 Self-Fix Didn't Work — Escalate to Engineer`;
-                alert("Could not escalate. Please verify backend server is running.");
-            }
-        }
-    }
-
-    window.markFixResolved = markFixResolved;
-    window.escalateFailedSelfFix = escalateFailedSelfFix;
     window.switchMode = switchMode;
     window.pickDomain = pickDomain;
     window.pickUrgency = pickUrgency;
     window.launchDiagnosis = launchDiagnosis;
     window.toggleTicketsFeed = toggleTicketsFeed;
+    window.logoutEmployee = logoutEmployee;
 
     document.querySelectorAll('.mode-tab').forEach((tab, index) => {
         tab.addEventListener('click', () => {
@@ -1021,6 +1037,7 @@
 
     renderSymptoms('laptop');
     fetchTickets();
+    checkAuthStatus();
 </script>
 
 </body>

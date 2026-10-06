@@ -5,11 +5,13 @@ import json
 import time
 import sqlite3
 import logging
-from datetime import datetime
+import hashlib
+import secrets
+from datetime import datetime, timedelta
 import numpy as np
 from google import genai
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -25,14 +27,44 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-TEMPLATES_DIR = os.path.join(BASE_DIR, "templates")
-templates = Jinja2Templates(directory=TEMPLATES_DIR)
 
-DB_PATH = os.path.join(BASE_DIR, "tickets.db")
+CANDIDATE_TEMPLATE_DIRS = [
+    os.path.join(BASE_DIR, "templates"),
+    os.path.join(BASE_DIR, "day13", "templates"),
+    os.path.join(os.path.dirname(BASE_DIR), "templates"),
+    os.path.join(os.path.dirname(BASE_DIR), "day13", "templates"),
+]
+VALID_TEMPLATE_DIRS = [d for d in CANDIDATE_TEMPLATE_DIRS if os.path.isdir(d)]
+TEMPLATES_DIR = VALID_TEMPLATE_DIRS[0] if VALID_TEMPLATE_DIRS else os.path.join(BASE_DIR, "templates")
+templates = Jinja2Templates(directory=VALID_TEMPLATE_DIRS if VALID_TEMPLATE_DIRS else TEMPLATES_DIR)
+
+CANDIDATE_DB_PATHS = [
+    os.path.join(BASE_DIR, "day13", "tickets.db"),
+    os.path.join(BASE_DIR, "tickets.db"),
+    os.path.join(os.path.dirname(BASE_DIR), "day13", "tickets.db"),
+    os.path.join(os.path.dirname(BASE_DIR), "tickets.db"),
+]
+DEFAULT_DB_PATH = next((p for p in CANDIDATE_DB_PATHS if os.path.exists(p)), os.path.join(BASE_DIR, "tickets.db"))
+DB_PATH = os.environ.get("TICKETS_DB_PATH", DEFAULT_DB_PATH)
 
 
-def init_db():
-    conn = sqlite3.connect(DB_PATH)
+def get_db_path() -> str:
+    """Returns the currently active SQLite database file path."""
+    return os.environ.get("TICKETS_DB_PATH", DB_PATH)
+
+
+def set_db_path(path: str) -> None:
+    """Allows programmatically switching the SQLite database (e.g. for isolated test runs)."""
+    global DB_PATH
+    DB_PATH = path
+    os.environ["TICKETS_DB_PATH"] = path
+    init_db(path)
+
+
+def init_db(db_path: str | None = None) -> None:
+    """Initializes the tickets, users, and sessions schema on the target database."""
+    target_path = db_path or get_db_path()
+    conn = sqlite3.connect(target_path)
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tickets (
@@ -42,7 +74,27 @@ def init_db():
             status TEXT DEFAULT 'open',
             created_at TEXT NOT NULL,
             resolved_at TEXT,
-            resolution_notes TEXT
+            resolution_notes TEXT,
+            employee_username TEXT
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL COLLATE NOCASE,
+            password_hash TEXT NOT NULL,
+            salt TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+    """)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sessions (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL,
+            username TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     """)
     cursor.execute("PRAGMA table_info(tickets)")
@@ -51,11 +103,161 @@ def init_db():
         cursor.execute("ALTER TABLE tickets ADD COLUMN resolved_at TEXT")
     if "resolution_notes" not in columns:
         cursor.execute("ALTER TABLE tickets ADD COLUMN resolution_notes TEXT")
+    if "employee_username" not in columns:
+        cursor.execute("ALTER TABLE tickets ADD COLUMN employee_username TEXT")
     conn.commit()
     conn.close()
 
 
 init_db()
+
+
+# --- Authentication & Password Management ---
+def hash_password(password: str, salt: str | None = None) -> tuple[str, str]:
+    """Hashes a password with PBKDF2-HMAC-SHA256 and a random 16-byte salt (100,000 iterations)."""
+    if not salt:
+        salt = secrets.token_hex(16)
+    hashed = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        100_000
+    ).hex()
+    return hashed, salt
+
+
+def verify_password(password: str, salt: str, expected_hash: str) -> bool:
+    """Verifies a plaintext password against a stored hash using constant-time comparison."""
+    hashed, _ = hash_password(password, salt)
+    return secrets.compare_digest(hashed, expected_hash)
+
+
+def create_user(username: str, password: str) -> tuple[dict | None, str | None]:
+    """Creates a new employee user in SQLite. Returns (user_dict, None) or (None, error_msg)."""
+    clean_user = (username or "").strip()
+    if not clean_user:
+        return None, "Username cannot be empty"
+    if len(clean_user) < 3 or len(clean_user) > 30:
+        return None, "Username must be between 3 and 30 characters"
+    if not re.match(r"^[a-zA-Z0-9_\-\.]+$", clean_user):
+        return None, "Username can only contain letters, numbers, hyphens, underscores, and dots"
+    if not password or len(password) < 6:
+        return None, "Password must be at least 6 characters long"
+    if len(password) > 128:
+        return None, "Password cannot exceed 128 characters"
+
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE LOWER(username) = LOWER(?)", (clean_user,))
+    if cursor.fetchone():
+        conn.close()
+        return None, f"Username '{clean_user}' is already taken. Please log in or choose another."
+
+    password_hash, salt = hash_password(password)
+    created_at = datetime.now().isoformat()
+    try:
+        cursor.execute(
+            "INSERT INTO users (username, password_hash, salt, created_at) VALUES (?, ?, ?, ?)",
+            (clean_user, password_hash, salt, created_at)
+        )
+        user_id = cursor.lastrowid
+        conn.commit()
+    except sqlite3.IntegrityError:
+        conn.close()
+        return None, f"Username '{clean_user}' already exists."
+    finally:
+        conn.close()
+
+    return {"id": user_id, "username": clean_user, "created_at": created_at}, None
+
+
+def authenticate_user(username: str, password: str) -> tuple[dict | None, str | None]:
+    """Validates employee credentials against SQLite. Returns (user_dict, None) or (None, error_msg)."""
+    clean_user = (username or "").strip()
+    if not clean_user or not password:
+        return None, "Username and password are required"
+
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, username, password_hash, salt, created_at FROM users WHERE LOWER(username) = LOWER(?)",
+        (clean_user,)
+    )
+    row = cursor.fetchone()
+    conn.close()
+
+    if not row:
+        return None, "Invalid username or password"
+
+    user_id, stored_username, stored_hash, salt, created_at = row
+    if not verify_password(password, salt, stored_hash):
+        return None, "Invalid username or password"
+
+    return {"id": user_id, "username": stored_username, "created_at": created_at}, None
+
+
+def create_session(user_id: int, username: str, days: int = 7) -> str:
+    """Generates a secure random session token and stores it in SQLite."""
+    token = secrets.token_hex(32)
+    created_at = datetime.now().isoformat()
+    expires_at = (datetime.now() + timedelta(days=days)).isoformat()
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO sessions (token, user_id, username, created_at, expires_at) VALUES (?, ?, ?, ?, ?)",
+        (token, user_id, username, created_at, expires_at)
+    )
+    conn.commit()
+    conn.close()
+    return token
+
+
+def delete_session(token: str) -> None:
+    """Removes a session token from SQLite upon logout."""
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM sessions WHERE token = ?", (token,))
+    conn.commit()
+    conn.close()
+
+
+def get_session_user(token: str) -> dict | None:
+    """Looks up a session token and returns the user dict if valid and unexpired."""
+    conn = sqlite3.connect(get_db_path())
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT s.token, s.user_id, s.username, s.expires_at, u.created_at FROM sessions s JOIN users u ON s.user_id = u.id WHERE s.token = ?",
+        (token,)
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return None
+    try:
+        expires_at = datetime.fromisoformat(row[3])
+        if datetime.now() > expires_at:
+            delete_session(token)
+            return None
+    except Exception:
+        return None
+
+    return {
+        "id": row[1],
+        "username": row[2],
+        "created_at": row[4]
+    }
+
+
+def get_current_user_from_request(request: Request) -> dict | None:
+    """Extracts authenticated user from cookies or Authorization header."""
+    token = request.cookies.get("session_token")
+    if not token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+    if not token:
+        return None
+    return get_session_user(token)
 
 PRIMARY_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash-lite")
 FALLBACK_MODEL = "gemini-3.8-flash"
@@ -337,12 +539,12 @@ def escalate_to_technician(issue_description):
     return f"This issue has been logged and escalated to an IT engineer: '{issue_description}'"
 
 
-def save_ticket(employee_question, decision):
-    conn = sqlite3.connect(DB_PATH)
+def save_ticket(employee_question, decision, employee_username=None):
+    conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO tickets (employee_question, decision, status, created_at) VALUES (?, ?, ?, ?)",
-        (employee_question, decision, "open", datetime.now().isoformat())
+        "INSERT INTO tickets (employee_question, decision, status, created_at, employee_username) VALUES (?, ?, ?, ?, ?)",
+        (employee_question, decision, "open", datetime.now().isoformat(), employee_username)
     )
     ticket_id = cursor.lastrowid
     conn.commit()
@@ -351,17 +553,17 @@ def save_ticket(employee_question, decision):
 
 
 def get_all_tickets(status: str | None = None, search: str | None = None):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
-    query = "SELECT id, employee_question, decision, status, created_at, resolved_at, resolution_notes FROM tickets WHERE 1=1"
+    query = "SELECT id, employee_question, decision, status, created_at, resolved_at, resolution_notes, employee_username FROM tickets WHERE 1=1"
     params = []
     if status and status.lower() != "all":
         query += " AND LOWER(status) = LOWER(?)"
         params.append(status.strip())
     if search and search.strip():
         term = f"%{search.strip()}%"
-        query += " AND (employee_question LIKE ? OR resolution_notes LIKE ? OR CAST(id AS TEXT) LIKE ?)"
-        params.extend([term, term, term])
+        query += " AND (employee_question LIKE ? OR resolution_notes LIKE ? OR employee_username LIKE ? OR CAST(id AS TEXT) LIKE ?)"
+        params.extend([term, term, term, term])
     query += " ORDER BY id DESC"
     cursor.execute(query, params)
     rows = cursor.fetchall()
@@ -374,14 +576,15 @@ def get_all_tickets(status: str | None = None, search: str | None = None):
             "status": r[3],
             "created_at": r[4],
             "resolved_at": r[5] if len(r) > 5 else None,
-            "resolution_notes": r[6] if len(r) > 6 else None
+            "resolution_notes": r[6] if len(r) > 6 else None,
+            "employee_username": r[7] if len(r) > 7 else None
         }
         for r in rows
     ]
 
 
 def get_ticket_stats():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
     cursor.execute("""
         SELECT 
@@ -405,7 +608,7 @@ def get_ticket_stats():
 
 
 def update_ticket_status(ticket_id: int, status: str = "resolved", notes: str | None = None):
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(get_db_path())
     cursor = conn.cursor()
     cursor.execute("SELECT id, status, resolution_notes FROM tickets WHERE id = ?", (ticket_id,))
     ticket = cursor.fetchone()
@@ -430,7 +633,7 @@ def update_ticket_status(ticket_id: int, status: str = "resolved", notes: str | 
     conn.commit()
 
     cursor.execute(
-        "SELECT id, employee_question, decision, status, created_at, resolved_at, resolution_notes FROM tickets WHERE id = ?",
+        "SELECT id, employee_question, decision, status, created_at, resolved_at, resolution_notes, employee_username FROM tickets WHERE id = ?",
         (ticket_id,)
     )
     r = cursor.fetchone()
@@ -442,7 +645,8 @@ def update_ticket_status(ticket_id: int, status: str = "resolved", notes: str | 
         "status": r[3],
         "created_at": r[4],
         "resolved_at": r[5],
-        "resolution_notes": r[6]
+        "resolution_notes": r[6],
+        "employee_username": r[7] if len(r) > 7 else None
     }
 
 
@@ -455,6 +659,99 @@ class AskRequest(BaseModel):
     question: str | None = None
     urgency: str | None = "normal"
     action_hint: str | None = None
+
+
+class AuthRequest(BaseModel):
+    username: str
+    password: str
+
+
+# --- Web & Authentication Routes ---
+@app.get("/login", response_class=HTMLResponse)
+@app.get("/login/", response_class=HTMLResponse)
+@app.get("/register", response_class=HTMLResponse)
+@app.get("/register/", response_class=HTMLResponse)
+@app.get("/signin", response_class=HTMLResponse)
+def login_page_route(request: Request):
+    return templates.TemplateResponse(request, "login.html")
+
+
+@app.post("/register")
+@app.post("/api/register")
+def register_endpoint(request: Request, payload: AuthRequest):
+    user, err = create_user(payload.username, payload.password)
+    if err:
+        return JSONResponse({"error": err}, status_code=400)
+
+    token = create_session(user["id"], user["username"])
+    resp = JSONResponse({
+        "status": "ok",
+        "message": f"Welcome, @{user['username']}! Account created successfully.",
+        "user": user
+    }, status_code=201)
+    resp.set_cookie(
+        key="session_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        max_age=86400 * 7,
+        path="/"
+    )
+    return resp
+
+
+@app.post("/login")
+@app.post("/api/login")
+def login_endpoint(request: Request, payload: AuthRequest):
+    user, err = authenticate_user(payload.username, payload.password)
+    if err:
+        return JSONResponse({"error": err}, status_code=401)
+
+    token = create_session(user["id"], user["username"])
+    resp = JSONResponse({
+        "status": "ok",
+        "message": f"Welcome back, @{user['username']}!",
+        "user": user
+    })
+    resp.set_cookie(
+        key="session_token",
+        value=token,
+        httponly=True,
+        samesite="lax",
+        max_age=86400 * 7,
+        path="/"
+    )
+    return resp
+
+
+@app.post("/logout")
+@app.post("/api/logout")
+def logout_endpoint(request: Request):
+    token = request.cookies.get("session_token")
+    if token:
+        delete_session(token)
+    resp = JSONResponse({"status": "ok", "message": "Successfully logged out"})
+    resp.delete_cookie("session_token", path="/")
+    return resp
+
+
+@app.get("/logout")
+def logout_redirect(request: Request):
+    token = request.cookies.get("session_token")
+    if token:
+        delete_session(token)
+    resp = RedirectResponse(url="/login", status_code=303)
+    resp.delete_cookie("session_token", path="/")
+    return resp
+
+
+@app.get("/api/me")
+@app.get("/api/auth/me")
+def me_endpoint(request: Request):
+    user = get_current_user_from_request(request)
+    if user:
+        return {"authenticated": True, "user": user}
+    return {"authenticated": False, "user": None}
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -530,11 +827,13 @@ class EscalateRequest(BaseModel):
 
 
 @app.post("/escalate")
-def escalate_route(payload: EscalateRequest):
+def escalate_route(request: Request, payload: EscalateRequest):
     raw_question = (payload.question or "").strip()
     issue = raw_question if raw_question else "Unresolved IT problem after self-fix attempt"
     reason = payload.reason or "Self-service troubleshooting was attempted but did not resolve the issue. Escalated to IT engineer."
-    ticket_id = save_ticket(issue, "escalate_to_technician")
+    current_user = get_current_user_from_request(request)
+    employee_username = current_user["username"] if current_user else None
+    ticket_id = save_ticket(issue, "escalate_to_technician", employee_username=employee_username)
     result = escalate_to_technician(issue)
     return {
         "status": "escalated",
@@ -563,10 +862,13 @@ def ask(request: Request, payload: AskRequest):
     if len(issue) > 500:
         return JSONResponse({"error": "Question too long (max 500 characters)"}, status_code=400)
 
+    current_user = get_current_user_from_request(request)
+    employee_username = current_user["username"] if current_user else None
+
     # Immediate escalation if action_hint is 'esc'
     if payload.action_hint == "esc":
         reason = "Self-service troubleshooting was attempted but did not resolve the issue. Escalated to IT engineer."
-        ticket_id = save_ticket(issue, "escalate_to_technician")
+        ticket_id = save_ticket(issue, "escalate_to_technician", employee_username=employee_username)
         result = escalate_to_technician(issue)
         return {
             "decision": {
@@ -666,7 +968,7 @@ Return ONLY valid JSON in this exact format:
     else:
         decision["action"] = "escalate_to_technician"
         steps = []
-        ticket_id = save_ticket(issue, decision["action"])
+        ticket_id = save_ticket(issue, decision["action"], employee_username=employee_username)
         result = escalate_to_technician(issue)
 
     return {"decision": decision, "result": result, "steps": steps, "ticket_id": ticket_id}

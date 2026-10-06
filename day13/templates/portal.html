@@ -158,6 +158,59 @@
             transform: translateY(-1px);
         }
 
+        .nav-auth-btn {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            color: #b45309;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-auth-btn:hover {
+            background: #fef3c7;
+            border-color: #f59e0b;
+            color: #92400e;
+            transform: translateY(-1px);
+        }
+
+        .nav-user-pill {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            padding: 5px 12px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .nav-logout-btn {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            color: #64748b;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-logout-btn:hover {
+            background: #fee2e2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+
         .mode-switcher {
             display: flex;
             gap: 8px;
@@ -553,7 +606,17 @@
                 <p>One-Click Automated Triage & RAG Self-Service Engine</p>
             </div>
         </div>
-        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div id="authStatusArea" style="display: flex; align-items: center; gap: 8px;">
+                <a href="/login" class="nav-auth-btn" id="navLoginBtn">🔑 Employee Sign In</a>
+                <div id="navUserBadge" style="display: none; align-items: center; gap: 6px;">
+                    <span class="nav-user-pill">
+                        <span>👤</span>
+                        <span id="navUsernameText">Employee</span>
+                    </span>
+                    <button class="nav-logout-btn" onclick="logoutEmployee()" title="Log out">Log Out</button>
+                </div>
+            </div>
             <a href="/engineer" class="nav-tech-btn">🛠️ Engineer View →</a>
             <div class="pulse-pill">
                 <span class="pulse-dot"></span>
@@ -898,6 +961,32 @@
         }
     }
 
+    async function checkAuthStatus() {
+        try {
+            const res = await fetch('/api/me');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.authenticated && data.user) {
+                    document.getElementById('navLoginBtn').style.display = 'none';
+                    document.getElementById('navUserBadge').style.display = 'inline-flex';
+                    document.getElementById('navUsernameText').innerText = '@' + data.user.username;
+                } else {
+                    document.getElementById('navLoginBtn').style.display = 'inline-flex';
+                    document.getElementById('navUserBadge').style.display = 'none';
+                }
+            }
+        } catch (e) {
+            console.warn('Auth status check error:', e);
+        }
+    }
+
+    async function logoutEmployee() {
+        try {
+            await fetch('/api/logout', { method: 'POST' });
+        } catch (e) {}
+        window.location.href = '/login';
+    }
+
     async function fetchTickets() {
         try {
             const res = await fetch('/tickets');
@@ -910,7 +999,10 @@
                 } else {
                     rows.innerHTML = data.tickets.slice(0, 5).map(t => `
                         <div class="db-ticket-row">
-                            <span><strong>#${t.id}</strong>: ${escapeHtml(t.employee_question)}</span>
+                            <span>
+                                <strong>#${t.id}</strong>${t.employee_username ? ` <em style="color:#64748b; font-size:0.75rem;">(@${escapeHtml(t.employee_username)})</em>` : ''}: 
+                                ${escapeHtml(t.employee_question)}
+                            </span>
                             <span style="color:#d97706; font-weight:800; font-size:0.75rem;">${t.status.toUpperCase()}</span>
                         </div>
                     `).join('');
@@ -935,6 +1027,7 @@
     window.pickUrgency = pickUrgency;
     window.launchDiagnosis = launchDiagnosis;
     window.toggleTicketsFeed = toggleTicketsFeed;
+    window.logoutEmployee = logoutEmployee;
 
     document.querySelectorAll('.mode-tab').forEach((tab, index) => {
         tab.addEventListener('click', () => {
@@ -944,6 +1037,7 @@
 
     renderSymptoms('laptop');
     fetchTickets();
+    checkAuthStatus();
 </script>
 
 </body>
